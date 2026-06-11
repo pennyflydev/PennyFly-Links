@@ -47,20 +47,18 @@ export async function POST(req: Request) {
     const displayName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0]
     const isAdmin = clerkId === process.env.ADMIN_CLERK_USER_ID
 
-    // Create profile
+    // Upsert profile (safe on retries)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .insert({
-        clerk_id: clerkId,
-        email,
-        role: isAdmin ? 'admin' : 'artist',
-        plan: isAdmin ? 'signed' : 'starter',
-      })
+      .upsert(
+        { clerk_id: clerkId, email, role: isAdmin ? 'admin' : 'artist', plan: isAdmin ? 'signed' : 'starter' },
+        { onConflict: 'clerk_id' }
+      )
       .select()
       .single()
 
     if (profileError || !profile) {
-      console.error('Profile insert failed:', profileError)
+      console.error('Profile upsert failed:', profileError)
       return new Response('Profile creation failed', { status: 500 })
     }
 
@@ -79,6 +77,17 @@ export async function POST(req: Request) {
       if (!existing) break
       attempt++
       slug = `${baseSlug}-${attempt}`
+    }
+
+    // Check if artist row already exists (safe on retries)
+    const { data: existingArtist } = await supabase
+      .from('artists')
+      .select()
+      .eq('profile_id', profile.id)
+      .single()
+
+    if (existingArtist) {
+      return new Response('OK', { status: 200 })
     }
 
     // Create artist row
