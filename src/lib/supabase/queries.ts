@@ -1,19 +1,60 @@
 import { auth } from '@clerk/nextjs/server'
+import { cookies } from 'next/headers'
 import { createClient } from './server'
 import { createAdminClient } from './server'
 
-export async function getArtistForCurrentUser() {
+export const IMPERSONATE_COOKIE = 'impersonate_artist_id'
+
+export type CurrentProfile = { id: string; role: string; clerk_id: string } | null
+
+// Resolve the logged-in user's profile (the real account, never impersonated).
+export async function getCurrentProfile(): Promise<CurrentProfile> {
   const { userId } = await auth()
   if (!userId) return null
+  const supabase = createAdminClient()
+  const { data } = await supabase.from('profiles').select('id, role, clerk_id').eq('clerk_id', userId).single()
+  return data
+}
+
+// Label account owned by this profile (if any).
+export async function getLabelForProfile(profileId: string) {
+  const supabase = createAdminClient()
+  const { data } = await supabase.from('labels').select('*').eq('owner_profile_id', profileId).single()
+  return data
+}
+
+// Can this profile view/manage the given artist? Admins can manage anyone;
+// a label can manage artists on its roster.
+export async function canManageArtist(
+  profile: NonNullable<CurrentProfile>,
+  artist: { label_id?: string | null }
+): Promise<boolean> {
+  if (profile.role === 'admin') return true
+  if (profile.role === 'label' && artist.label_id) {
+    const label = await getLabelForProfile(profile.id)
+    return !!label && label.id === artist.label_id
+  }
+  return false
+}
+
+// The artist whose dashboard the current request acts on.
+// Honors an impersonation cookie when the caller is authorized to use it.
+export async function getArtistForCurrentUser() {
+  const profile = await getCurrentProfile()
+  if (!profile) return null
 
   const supabase = createAdminClient()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('clerk_id', userId)
-    .single()
 
-  if (!profile) return null
+  const cookieStore = await cookies()
+  const impersonateId = cookieStore.get(IMPERSONATE_COOKIE)?.value
+  if (impersonateId) {
+    const { data: target } = await supabase
+      .from('artists')
+      .select('*, profiles(clerk_id, role, plan)')
+      .eq('id', impersonateId)
+      .single()
+    if (target && (await canManageArtist(profile, target))) return target
+  }
 
   const { data } = await supabase
     .from('artists')
@@ -22,6 +63,26 @@ export async function getArtistForCurrentUser() {
     .single()
 
   return data
+}
+
+// Banner context: is the current request impersonating, and as whom?
+export async function getImpersonationContext() {
+  const cookieStore = await cookies()
+  const impersonateId = cookieStore.get(IMPERSONATE_COOKIE)?.value
+  if (!impersonateId) return null
+
+  const profile = await getCurrentProfile()
+  if (!profile) return null
+
+  const supabase = createAdminClient()
+  const { data: target } = await supabase
+    .from('artists')
+    .select('id, artist_name, slug, label_id')
+    .eq('id', impersonateId)
+    .single()
+  if (!target || !(await canManageArtist(profile, target))) return null
+
+  return { artistId: target.id, artistName: target.artist_name || target.slug }
 }
 
 export async function getPromoLinksForArtist(artistId: string) {

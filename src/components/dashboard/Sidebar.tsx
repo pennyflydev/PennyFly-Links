@@ -24,7 +24,7 @@ const navItems = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
+export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?: boolean; isLabel?: boolean }) {
   const pathname = usePathname()
 
   const isActive = (href: string, exact = false) =>
@@ -63,7 +63,7 @@ export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
 
       {/* Footer */}
       <div className="px-4 py-4 border-t border-zinc-800 space-y-3">
-        {isAdmin && (
+        {(isAdmin || isLabel) && (
           <Link
             href="/roster"
             className={cn(
@@ -74,7 +74,7 @@ export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
             )}
           >
             <Radio className="w-4 h-4 shrink-0" />
-            Label Roster
+            {isAdmin ? 'Admin · All Artists' : 'My Roster'}
           </Link>
         )}
         <div className="flex items-center gap-3 px-3">

@@ -1,33 +1,39 @@
-import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-async function requireAdminProfile() {
-  const { userId } = await auth()
-  if (!userId || userId !== process.env.ADMIN_CLERK_USER_ID) return null
-  const supabase = createAdminClient()
-  const { data } = await supabase.from('profiles').select('id').eq('clerk_id', userId).single()
-  return data?.id ?? null
+// Admins and labels can invite. Returns { profileId, labelId } or null.
+async function inviterContext() {
+  const profile = await getCurrentProfile()
+  if (!profile) return null
+  if (profile.role === 'admin') return { profileId: profile.id, labelId: null as string | null }
+  if (profile.role === 'label') {
+    const label = await getLabelForProfile(profile.id)
+    return { profileId: profile.id, labelId: label?.id ?? null }
+  }
+  return null
 }
 
 export async function GET() {
-  const profileId = await requireAdminProfile()
-  if (!profileId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const ctx = await inviterContext()
+  if (!ctx) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const supabase = createAdminClient()
-  const { data } = await supabase
+  let q = supabase
     .from('artist_invites')
     .select('id, email, token, claimed_at, expires_at, created_at')
     .order('created_at', { ascending: false })
-
+  // Labels see only their own invites; admin sees all.
+  if (ctx.labelId) q = q.eq('label_id', ctx.labelId)
+  const { data } = await q
   return NextResponse.json({ invites: data ?? [] })
 }
 
 export async function POST(req: NextRequest) {
-  const profileId = await requireAdminProfile()
-  if (!profileId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const ctx = await inviterContext()
+  if (!ctx) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { email } = await req.json()
   if (!email || !EMAIL_RE.test(email)) {
@@ -37,7 +43,7 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('artist_invites')
-    .insert({ email: email.toLowerCase().trim(), invited_by: profileId })
+    .insert({ email: email.toLowerCase().trim(), invited_by: ctx.profileId, label_id: ctx.labelId })
     .select('id, email, token, claimed_at, expires_at, created_at')
     .single()
 

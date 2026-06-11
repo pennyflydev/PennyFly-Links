@@ -12,7 +12,7 @@ create table profiles (
   id           uuid primary key default uuid_generate_v4(),
   clerk_id     text unique not null,
   email        text not null,
-  role         text not null default 'artist' check (role in ('admin', 'artist')),
+  role         text not null default 'artist' check (role in ('admin', 'label', 'artist')),
   plan         text not null default 'starter' check (plan in ('signed', 'starter', 'pro', 'label', 'enterprise')),
   stripe_customer_id    text,
   stripe_subscription_id text,
@@ -25,12 +25,25 @@ create policy "Users can read own profile" on profiles for select using (auth.ui
 create policy "Users can update own profile" on profiles for update using (auth.uid()::text = clerk_id);
 
 -- ─────────────────────────────────────────────
+-- LABELS
+-- An account that owns/manages a roster of artists
+-- ─────────────────────────────────────────────
+create table labels (
+  id                uuid primary key default uuid_generate_v4(),
+  owner_profile_id  uuid not null references profiles(id) on delete cascade,
+  name              text not null default '',
+  created_at        timestamptz not null default now()
+);
+alter table labels enable row level security;
+
+-- ─────────────────────────────────────────────
 -- ARTISTS
 -- Public-facing artist page config per profile
 -- ─────────────────────────────────────────────
 create table artists (
   id               uuid primary key default uuid_generate_v4(),
   profile_id       uuid not null references profiles(id) on delete cascade,
+  label_id         uuid references labels(id) on delete set null,
   artist_name      text not null default '',
   slug             text unique not null,
   bio              text default '',
@@ -258,6 +271,7 @@ create table artist_invites (
   token       text unique not null default encode(gen_random_bytes(24), 'hex'),
   email       text not null,
   invited_by  uuid not null references profiles(id),
+  label_id    uuid references labels(id) on delete cascade,
   claimed_by  uuid references profiles(id),
   claimed_at  timestamptz,
   expires_at  timestamptz not null default (now() + interval '7 days'),

@@ -47,10 +47,11 @@ export async function POST(req: Request) {
     const displayName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0]
     const isAdmin = clerkId === process.env.ADMIN_CLERK_USER_ID
 
-    // Was this email invited by the label? If so, they become a signed artist.
+    // Was this email invited by the label? If so, they become a signed artist
+    // and join that label's roster.
     const { data: invite } = await supabase
       .from('artist_invites')
-      .select('id')
+      .select('id, label_id')
       .eq('email', email.toLowerCase())
       .is('claimed_by', null)
       .gt('expires_at', new Date().toISOString())
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
         artist_name: displayName,
         slug,
         is_signed: isSigned,
+        label_id: invite?.label_id ?? null,
       })
       .select()
       .single()
