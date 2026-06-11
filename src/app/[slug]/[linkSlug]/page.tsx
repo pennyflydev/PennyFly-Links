@@ -4,12 +4,13 @@ import type { Metadata } from 'next'
 import { Music2 } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
 import StreamingButtons from '../StreamingButtons'
+import PixelScripts from '../PixelScripts'
 
 async function getRelease(artistSlug: string, linkSlug: string) {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('promo_links')
-    .select('*, streaming_links(*), artists!inner(id, artist_name, slug, avatar_url)')
+    .select('*, streaming_links(*), artists!inner(id, artist_name, slug, avatar_url, meta_pixel_id, tiktok_pixel_id, ga_measurement_id)')
     .eq('slug', linkSlug)
     .eq('is_published', true)
     .eq('artists.slug', artistSlug)
@@ -52,12 +53,20 @@ export default async function ReleasePage({
   const release = await getRelease(slug, linkSlug)
   if (!release) notFound()
 
-  const artist = release.artists as { id: string; artist_name: string; slug: string; avatar_url: string | null }
+  const artist = release.artists as {
+    id: string; artist_name: string; slug: string; avatar_url: string | null
+    meta_pixel_id: string | null; tiktok_pixel_id: string | null; ga_measurement_id: string | null
+  }
 
   trackView(artist.id, release.id)
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 py-10">
+      <PixelScripts
+        metaPixelId={artist.meta_pixel_id}
+        tiktokPixelId={artist.tiktok_pixel_id}
+        gaMeasurementId={artist.ga_measurement_id}
+      />
       <div className="w-full max-w-md flex flex-col items-center text-center gap-6">
         {release.cover_url ? (
           <img src={release.cover_url} alt={release.title} className="w-60 h-60 rounded-2xl object-cover shadow-2xl" />

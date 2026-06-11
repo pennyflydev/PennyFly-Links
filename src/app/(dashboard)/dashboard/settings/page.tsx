@@ -22,6 +22,9 @@ export default function SettingsPage() {
   const [genreInput, setGenreInput] = useState('')
   const [subdomain, setSubdomain] = useState('')
   const [slug, setSlug] = useState('')
+  const [metaPixel, setMetaPixel] = useState('')
+  const [tiktokPixel, setTiktokPixel] = useState('')
+  const [gaId, setGaId] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
@@ -36,6 +39,9 @@ export default function SettingsPage() {
           setGenres(artist.genres ?? [])
           setSubdomain(artist.subdomain ?? '')
           setSlug(artist.slug ?? '')
+          setMetaPixel(artist.meta_pixel_id ?? '')
+          setTiktokPixel(artist.tiktok_pixel_id ?? '')
+          setGaId(artist.ga_measurement_id ?? '')
         }
       })
       .finally(() => setLoading(false))
@@ -58,6 +64,33 @@ export default function SettingsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ artist_name: artistName, bio, genres }),
+      })
+      if (res.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2500)
+      } else {
+        const data = await res.json()
+        setError(data.error ?? 'Could not save')
+      }
+    } catch {
+      setError('Could not save')
+    }
+    setSaving(false)
+  }
+
+  async function savePixels() {
+    setSaving(true)
+    setError('')
+    setSaved(false)
+    try {
+      const res = await fetch('/api/artist', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meta_pixel_id: metaPixel.trim() || null,
+          tiktok_pixel_id: tiktokPixel.trim() || null,
+          ga_measurement_id: gaId.trim() || null,
+        }),
       })
       if (res.ok) {
         setSaved(true)
@@ -221,28 +254,57 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'integrations' && (
-            <div className="space-y-4">
-              {[
-                { name: 'AWeber', description: 'Auto-sync fan emails to your AWeber list', badge: 'Priority' },
-                { name: 'Mailchimp', description: 'Auto-sync fan emails to your Mailchimp audience', badge: null },
-                { name: 'Klaviyo', description: 'Auto-sync fan emails to your Klaviyo list', badge: null },
-                { name: 'Meta Pixel', description: 'Track conversions from Facebook & Instagram ads', badge: null },
-                { name: 'TikTok Pixel', description: 'Track conversions from TikTok ads', badge: null },
-                { name: 'Google Analytics', description: 'Get detailed visitor insights', badge: null },
-              ].map(({ name, description, badge }) => (
-                <div key={name} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">{name}</span>
-                      {badge && <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-400 rounded text-xs font-medium">{badge}</span>}
-                    </div>
-                    <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
-                  </div>
-                  <button className="px-4 py-1.5 border border-zinc-700 text-zinc-400 rounded-lg text-xs font-medium cursor-default">
-                    Coming soon
-                  </button>
+            <div className="space-y-6">
+              {/* Tracking pixels — live */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+                <div>
+                  <h2 className="text-base font-semibold text-white">Tracking Pixels</h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">Fire a PageView on your public pages to build retargeting audiences.</p>
                 </div>
-              ))}
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1.5">Meta Pixel ID</label>
+                  <input value={metaPixel} onChange={(e) => setMetaPixel(e.target.value)} placeholder="e.g. 1234567890"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                </div>
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1.5">TikTok Pixel ID</label>
+                  <input value={tiktokPixel} onChange={(e) => setTiktokPixel(e.target.value)} placeholder="e.g. CABC1234..."
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                </div>
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1.5">Google Analytics ID</label>
+                  <input value={gaId} onChange={(e) => setGaId(e.target.value)} placeholder="e.g. G-XXXXXXXXXX"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                </div>
+                <button onClick={savePixels} disabled={saving}
+                  className="px-4 py-2 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 disabled:opacity-50 transition-colors flex items-center gap-2">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {saved ? <><Check className="w-4 h-4" /> Saved</> : 'Save Pixels'}
+                </button>
+              </div>
+
+              {/* Email integrations — coming soon */}
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Email Integrations</p>
+                {[
+                  { name: 'AWeber', description: 'Auto-sync fan emails to your AWeber list', badge: 'Priority' },
+                  { name: 'Mailchimp', description: 'Auto-sync fan emails to your Mailchimp audience', badge: null },
+                  { name: 'Klaviyo', description: 'Auto-sync fan emails to your Klaviyo list', badge: null },
+                ].map(({ name, description, badge }) => (
+                  <div key={name} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{name}</span>
+                        {badge && <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-400 rounded text-xs font-medium">{badge}</span>}
+                      </div>
+                      <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+                    </div>
+                    <button className="px-4 py-1.5 border border-zinc-700 text-zinc-400 rounded-lg text-xs font-medium cursor-default">
+                      Coming soon
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

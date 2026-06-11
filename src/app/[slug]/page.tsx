@@ -4,6 +4,7 @@ import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
 import StreamingButtons from './StreamingButtons'
+import PixelScripts from './PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -52,6 +53,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div className="min-h-screen text-white flex flex-col items-center" style={bg}>
+      <PixelScripts
+        metaPixelId={artist.meta_pixel_id}
+        tiktokPixelId={artist.tiktok_pixel_id}
+        gaMeasurementId={artist.ga_measurement_id}
+      />
       <div className="w-full max-w-md mx-auto px-4 py-10 flex flex-col items-center gap-6">
 
         {/* Profile */}

@@ -43,6 +43,9 @@ create table artists (
   custom_domain    text unique,
   subdomain        text unique,
   is_signed        boolean not null default false,
+  meta_pixel_id      text,
+  tiktok_pixel_id    text,
+  ga_measurement_id  text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
