@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, Check, ChevronUp, ChevronDown, Music2 } from 'lucide-react'
+import { Loader2, Check, ChevronUp, ChevronDown, Music2, X } from 'lucide-react'
 
 type Section = { section: string; is_visible: boolean; sort_order: number }
 
@@ -34,13 +34,17 @@ export default function ArtistPageEditor() {
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState<'avatar' | 'cover' | null>(null)
   const [sections, setSections] = useState<Section[]>([])
+  const [socialLinks, setSocialLinks] = useState<{ platform: string; url: string }[]>([])
+  const [customLinks, setCustomLinks] = useState<{ label: string; url: string }[]>([])
 
   useEffect(() => {
     Promise.all([
       fetch('/api/artist').then((r) => r.json()),
       fetch('/api/sections').then((r) => r.json()),
+      fetch('/api/social-links').then((r) => r.json()),
+      fetch('/api/custom-links').then((r) => r.json()),
     ])
-      .then(([{ artist }, { sections }]) => {
+      .then(([{ artist }, { sections }, social, custom]) => {
         if (artist) {
           setArtistName(artist.artist_name ?? '')
           setBio(artist.bio ?? '')
@@ -53,6 +57,8 @@ export default function ArtistPageEditor() {
           ? sections
           : Object.keys(SECTION_LABELS).map((s, i) => ({ section: s, is_visible: true, sort_order: i }))
         setSections([...loaded].sort((a, b) => a.sort_order - b.sort_order))
+        setSocialLinks(social.links ?? [])
+        setCustomLinks(custom.links ?? [])
       })
       .finally(() => setLoading(false))
   }, [])
@@ -97,7 +103,7 @@ export default function ArtistPageEditor() {
     setError('')
     setSaved(false)
     try {
-      const [a, s] = await Promise.all([
+      const [a, s, soc, cust] = await Promise.all([
         fetch('/api/artist', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -108,8 +114,18 @@ export default function ArtistPageEditor() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sections: sections.map((x, i) => ({ ...x, sort_order: i })) }),
         }),
+        fetch('/api/social-links', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ links: socialLinks }),
+        }),
+        fetch('/api/custom-links', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ links: customLinks }),
+        }),
       ])
-      if (a.ok && s.ok) {
+      if (a.ok && s.ok && soc.ok && cust.ok) {
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)
       } else {
@@ -270,6 +286,78 @@ export default function ArtistPageEditor() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Social Links */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Social Links</span>
+                <button
+                  onClick={() => setSocialLinks([...socialLinks, { platform: '', url: '' }])}
+                  className="text-xs text-yellow-400 hover:text-yellow-300 font-medium"
+                >
+                  + Add
+                </button>
+              </div>
+              {socialLinks.length > 0 && (
+                <div className="border-t border-zinc-800 p-3 space-y-2">
+                  {socialLinks.map((l, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        value={l.platform}
+                        onChange={(e) => setSocialLinks(socialLinks.map((x, j) => (j === i ? { ...x, platform: e.target.value } : x)))}
+                        placeholder="instagram"
+                        className="w-28 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                      />
+                      <input
+                        value={l.url}
+                        onChange={(e) => setSocialLinks(socialLinks.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))}
+                        placeholder="https://…"
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                      />
+                      <button onClick={() => setSocialLinks(socialLinks.filter((_, j) => j !== i))} className="text-zinc-600 hover:text-red-400">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Custom Links */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Custom Links</span>
+                <button
+                  onClick={() => setCustomLinks([...customLinks, { label: '', url: '' }])}
+                  className="text-xs text-yellow-400 hover:text-yellow-300 font-medium"
+                >
+                  + Add
+                </button>
+              </div>
+              {customLinks.length > 0 && (
+                <div className="border-t border-zinc-800 p-3 space-y-2">
+                  {customLinks.map((l, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        value={l.label}
+                        onChange={(e) => setCustomLinks(customLinks.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
+                        placeholder="Merch"
+                        className="w-28 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                      />
+                      <input
+                        value={l.url}
+                        onChange={(e) => setCustomLinks(customLinks.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))}
+                        placeholder="https://…"
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+                      />
+                      <button onClick={() => setCustomLinks(customLinks.filter((_, j) => j !== i))} className="text-zinc-600 hover:text-red-400">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
