@@ -31,6 +31,8 @@ export default function CreateLinkPage() {
   const [releaseType, setReleaseType] = useState('Single')
   const [slug, setSlug] = useState('')
   const [streamingLinks, setStreamingLinks] = useState<Record<string, string>>({})
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const [uploadingCover, setUploadingCover] = useState(false)
 
   async function handleAutoFill() {
     if (!autoFillUrl) return
@@ -40,6 +42,7 @@ export default function CreateLinkPage() {
       const data = await res.json()
       if (data.title) { setTitle(data.title); setSlug(slugify(data.title)) }
       if (data.artistName) setArtistName(data.artistName)
+      if (data.thumbnailUrl) setCoverUrl(data.thumbnailUrl)
       if (data.links) {
         const map: Record<string, string> = {}
         for (const { platform, url } of data.links) map[platform] = url
@@ -47,6 +50,19 @@ export default function CreateLinkPage() {
       }
     } catch {}
     setAutoFillLoading(false)
+  }
+
+  async function handleCoverUpload(file: File) {
+    setUploadingCover(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('kind', 'release')
+      const res = await fetch('/api/upload', { method: 'POST', body: form })
+      const data = await res.json()
+      if (res.ok) setCoverUrl(data.url)
+    } catch {}
+    setUploadingCover(false)
   }
 
   async function handlePublish(publish: boolean) {
@@ -62,6 +78,7 @@ export default function CreateLinkPage() {
           releaseType: releaseType.toLowerCase(),
           slug,
           publish,
+          coverUrl,
           streamingLinks: Object.entries(streamingLinks).map(([platform, url]) => ({ platform, url })),
         }),
       })
@@ -176,8 +193,27 @@ export default function CreateLinkPage() {
       )}
 
       {step === 2 && (
-        <div className="space-y-4">
-          <p className="text-zinc-400 text-sm">Theme customization — uses your Artist Page theme. You can update it in Artist Page settings.</p>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">Cover Art</label>
+            <div className="flex items-center gap-4">
+              {coverUrl ? (
+                <img src={coverUrl} alt="" className="w-24 h-24 rounded-xl object-cover border border-zinc-700" />
+              ) : (
+                <div className="w-24 h-24 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-600 text-xs text-center px-2">
+                  No cover yet
+                </div>
+              )}
+              <label className="px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 transition-colors cursor-pointer flex items-center gap-2">
+                {uploadingCover && <Loader2 className="w-4 h-4 animate-spin" />}
+                {coverUrl ? 'Replace' : 'Upload'}
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />
+              </label>
+            </div>
+            <p className="text-xs text-zinc-500 mt-2">Auto-filled from your streaming link when available. Upload to override.</p>
+          </div>
+          <p className="text-zinc-500 text-xs">Page colors use your Artist Page theme — update it in the Artist Page editor.</p>
           <div className="flex justify-between pt-4">
             <button onClick={() => setStep(1)} className="px-5 py-2.5 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 transition-colors">← Back</button>
             <button onClick={() => setStep(3)} className="px-6 py-2.5 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 transition-colors">Next →</button>
@@ -187,11 +223,18 @@ export default function CreateLinkPage() {
 
       {step === 3 && (
         <div className="space-y-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-2">
-            <p className="text-sm font-medium text-white">{title}</p>
-            <p className="text-xs text-zinc-400">{artistName} · {releaseType}</p>
-            <p className="text-xs text-zinc-500">pennyfly.com/{slug}</p>
-            <p className="text-xs text-zinc-500">{Object.values(streamingLinks).filter(Boolean).length} platforms linked</p>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex items-center gap-4">
+            {coverUrl ? (
+              <img src={coverUrl} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-zinc-800 shrink-0" />
+            )}
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-white">{title}</p>
+              <p className="text-xs text-zinc-400">{artistName} · {releaseType}</p>
+              <p className="text-xs text-zinc-500">pennyfly.com/{slug}</p>
+              <p className="text-xs text-zinc-500">{Object.values(streamingLinks).filter(Boolean).length} platforms linked</p>
+            </div>
           </div>
           <div className="flex justify-between pt-4">
             <button onClick={() => setStep(2)} className="px-5 py-2.5 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 transition-colors">← Back</button>

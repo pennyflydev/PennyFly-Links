@@ -15,8 +15,26 @@ export default function CreatePresavePage() {
   const [releaseDate, setReleaseDate] = useState('')
   const [description, setDescription] = useState('')
   const [showCounter, setShowCounter] = useState(true)
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const [uploadingCover, setUploadingCover] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  async function handleCoverUpload(file: File) {
+    setUploadingCover(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('kind', 'presave')
+      const res = await fetch('/api/upload', { method: 'POST', body: form })
+      const data = await res.json()
+      if (res.ok) setCoverUrl(data.url)
+      else setError(data.error ?? 'Upload failed')
+    } catch {
+      setError('Upload failed')
+    }
+    setUploadingCover(false)
+  }
 
   async function handleSubmit() {
     setSaving(true)
@@ -25,7 +43,7 @@ export default function CreatePresavePage() {
       const res = await fetch('/api/presave', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, slug, artistName, spotifyUrl, releaseDate, description, showCounter }),
+        body: JSON.stringify({ title, slug, artistName, spotifyUrl, releaseDate, description, showCounter, coverUrl }),
       })
       if (res.ok) {
         router.push('/dashboard/pre-save')
@@ -61,6 +79,22 @@ export default function CreatePresavePage() {
             <span className="px-3 py-2.5 bg-zinc-800 text-zinc-400 text-sm border-r border-zinc-700">pennyfly.com/pre-save/</span>
             <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-new-album"
               className="flex-1 bg-zinc-900 px-3 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-2">Cover Art</label>
+          <div className="flex items-center gap-4">
+            {coverUrl ? (
+              <img src={coverUrl} alt="" className="w-20 h-20 rounded-xl object-cover border border-zinc-800" />
+            ) : (
+              <div className="w-20 h-20 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600 text-xs">None</div>
+            )}
+            <label className="px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 transition-colors cursor-pointer flex items-center gap-2">
+              {uploadingCover && <Loader2 className="w-4 h-4 animate-spin" />}
+              {coverUrl ? 'Replace' : 'Upload'}
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />
+            </label>
           </div>
         </div>
         <div>
