@@ -47,11 +47,22 @@ export async function POST(req: Request) {
     const displayName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0]
     const isAdmin = clerkId === process.env.ADMIN_CLERK_USER_ID
 
+    // Was this email invited by the label? If so, they become a signed artist.
+    const { data: invite } = await supabase
+      .from('artist_invites')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .is('claimed_by', null)
+      .gt('expires_at', new Date().toISOString())
+      .single()
+
+    const isSigned = isAdmin || !!invite
+
     // Upsert profile (safe on retries)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .upsert(
-        { clerk_id: clerkId, email, role: isAdmin ? 'admin' : 'artist', plan: isAdmin ? 'signed' : 'starter' },
+        { clerk_id: clerkId, email, role: isAdmin ? 'admin' : 'artist', plan: isSigned ? 'signed' : 'starter' },
         { onConflict: 'clerk_id' }
       )
       .select()
@@ -97,7 +108,7 @@ export async function POST(req: Request) {
         profile_id: profile.id,
         artist_name: displayName,
         slug,
-        is_signed: isAdmin,
+        is_signed: isSigned,
       })
       .select()
       .single()
@@ -105,6 +116,14 @@ export async function POST(req: Request) {
     if (artistError || !artist) {
       console.error('Artist insert failed:', artistError)
       return new Response('Artist creation failed', { status: 500 })
+    }
+
+    // Mark the invite as claimed so it can't be reused.
+    if (invite) {
+      await supabase
+        .from('artist_invites')
+        .update({ claimed_by: profile.id, claimed_at: new Date().toISOString() })
+        .eq('id', invite.id)
     }
 
     // Seed default page sections

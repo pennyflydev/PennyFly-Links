@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { Radio, Plus, Users, TrendingUp } from 'lucide-react'
+import { Radio, Users, TrendingUp } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
+import RosterInvite, { type Invite } from './RosterInvite'
 
 type RosterArtist = {
   id: string
@@ -15,13 +16,17 @@ type RosterArtist = {
 export default async function RosterPage() {
   const supabase = createAdminClient()
 
-  const [{ data: artists }, fans, clicks] = await Promise.all([
+  const [{ data: artists }, fans, clicks, { data: invites }] = await Promise.all([
     supabase
       .from('artists')
       .select('id, artist_name, slug, is_signed, created_at, profiles(email, plan), subscribers(count)')
       .order('created_at', { ascending: false }),
     supabase.from('subscribers').select('id', { count: 'exact', head: true }),
     supabase.from('analytics_events').select('id', { count: 'exact', head: true }).eq('event_type', 'click'),
+    supabase
+      .from('artist_invites')
+      .select('id, email, token, claimed_at, expires_at, created_at')
+      .order('created_at', { ascending: false }),
   ])
 
   const roster = (artists ?? []) as unknown as RosterArtist[]
@@ -42,11 +47,9 @@ export default async function RosterPage() {
           </div>
           <p className="text-sm text-zinc-400">Your entire roster. One dashboard.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-zinc-700 text-zinc-400 rounded-lg text-sm font-medium cursor-default">
-          <Plus className="w-4 h-4" />
-          Invite Artist (soon)
-        </button>
       </div>
+
+      <RosterInvite initialInvites={(invites ?? []) as Invite[]} />
 
       {/* Aggregate stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
