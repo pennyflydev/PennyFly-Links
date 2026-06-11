@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { LayoutDashboard, MousePointerClick, Link2, TrendingUp } from 'lucide-react'
+import QrButton from '@/components/QrButton'
 
 type Event = { event_type: 'view' | 'click'; platform: string | null; created_at: string }
 
@@ -98,12 +99,15 @@ export default function OverviewClient({
         <div>
           <h1 className="text-2xl font-bold text-white">Overview</h1>
           {artistSlug && (
-            <p className="text-sm text-zinc-400 mt-1">
-              Your page:{' '}
-              <a href={`/${artistSlug}`} target="_blank" className="text-yellow-400 hover:underline">
-                pennyfly.com/{artistSlug}
-              </a>
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm text-zinc-400">
+                Your page:{' '}
+                <a href={`/${artistSlug}`} target="_blank" className="text-yellow-400 hover:underline">
+                  pennyfly.com/{artistSlug}
+                </a>
+              </p>
+              <QrButton url={`/${artistSlug}`} filename={`flylink-${artistSlug}`} />
+            </div>
           )}
         </div>
         <div className="flex items-center gap-2 text-sm">

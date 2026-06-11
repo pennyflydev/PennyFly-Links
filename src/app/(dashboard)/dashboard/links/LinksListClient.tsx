@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Plus, Search, ExternalLink, Eye, MousePointerClick, Copy, Trash2, Check, Loader2 } from 'lucide-react'
+import QrButton from '@/components/QrButton'
 
 export type PromoLink = {
   id: string
@@ -114,6 +115,7 @@ export default function LinksListClient({
                   <button onClick={() => copyLink(link)} title="Copy link" className="p-1.5 text-zinc-500 hover:text-white transition-colors">
                     {copied === link.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                   </button>
+                  <QrButton url={`/${artistSlug}/${link.slug}`} filename={`flylink-${link.slug}`} />
                   <a href={`/${artistSlug}/${link.slug}`} target="_blank" title="Open" className="p-1.5 text-zinc-500 hover:text-white transition-colors">
                     <ExternalLink className="w-4 h-4" />
                   </a>

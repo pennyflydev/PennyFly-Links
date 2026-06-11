@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Plus, Calendar, Copy, Trash2, Check, Loader2 } from 'lucide-react'
+import QrButton from '@/components/QrButton'
 
 export type Campaign = {
   id: string
@@ -78,6 +79,7 @@ export default function PresaveListClient({ initialCampaigns }: { initialCampaig
             <button onClick={() => copyLink(c)} title="Copy link" className="p-1.5 text-zinc-500 hover:text-white transition-colors">
               {copied === c.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
             </button>
+            <QrButton url={`/pre-save/${c.slug}`} filename={`presave-${c.slug}`} />
             <a href={`/pre-save/${c.slug}`} target="_blank" className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors">
               View Page
             </a>
