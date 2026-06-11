@@ -63,7 +63,14 @@ export async function POST(req: Request) {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .upsert(
-        { clerk_id: clerkId, email, role: isAdmin ? 'admin' : 'artist', plan: isSigned ? 'signed' : 'starter' },
+        {
+          clerk_id: clerkId,
+          email,
+          role: isAdmin ? 'admin' : 'artist',
+          plan: isSigned ? 'signed' : 'starter',
+          // Admins and invited artists skip the artist/label choice.
+          onboarded: isAdmin || !!invite,
+        },
         { onConflict: 'clerk_id' }
       )
       .select()

@@ -9,6 +9,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!userId) redirect('/sign-in')
 
   const [profile, impersonation] = await Promise.all([getCurrentProfile(), getImpersonationContext()])
+
+  // New signups who haven't chosen artist vs label go to onboarding first.
+  if (profile && !profile.onboarded && profile.role !== 'admin') redirect('/onboarding')
+
+  // Label accounts don't have an artist dashboard — send them to their roster.
+  if (profile?.role === 'label' && !impersonation) redirect('/roster')
+
   const isAdmin = profile?.role === 'admin'
   const isLabel = profile?.role === 'label'
 

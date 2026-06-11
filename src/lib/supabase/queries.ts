@@ -5,14 +5,14 @@ import { createAdminClient } from './server'
 
 export const IMPERSONATE_COOKIE = 'impersonate_artist_id'
 
-export type CurrentProfile = { id: string; role: string; clerk_id: string } | null
+export type CurrentProfile = { id: string; role: string; clerk_id: string; onboarded: boolean } | null
 
 // Resolve the logged-in user's profile (the real account, never impersonated).
 export async function getCurrentProfile(): Promise<CurrentProfile> {
   const { userId } = await auth()
   if (!userId) return null
   const supabase = createAdminClient()
-  const { data } = await supabase.from('profiles').select('id, role, clerk_id').eq('clerk_id', userId).single()
+  const { data } = await supabase.from('profiles').select('id, role, clerk_id, onboarded').eq('clerk_id', userId).single()
   return data
 }
 

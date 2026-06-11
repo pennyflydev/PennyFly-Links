@@ -14,6 +14,7 @@ create table profiles (
   email        text not null,
   role         text not null default 'artist' check (role in ('admin', 'label', 'artist')),
   plan         text not null default 'starter' check (plan in ('signed', 'starter', 'pro', 'label', 'enterprise')),
+  onboarded    boolean not null default false,
   stripe_customer_id    text,
   stripe_subscription_id text,
   created_at   timestamptz not null default now(),

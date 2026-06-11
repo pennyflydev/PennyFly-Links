@@ -13,7 +13,7 @@ const isPublicRoute = createRouteMatcher([
   '/:slug/(.*)',
 ])
 
-const isDashboardRoute = createRouteMatcher(['/dashboard(.*)', '/roster(.*)'])
+const isDashboardRoute = createRouteMatcher(['/dashboard(.*)', '/roster(.*)', '/onboarding'])
 
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return NextResponse.next()
