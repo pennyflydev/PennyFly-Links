@@ -12,7 +12,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider afterSignOutUrl="/">
+    <ClerkProvider
+      afterSignOutUrl="/"
+      signInFallbackRedirectUrl="/dashboard/overview"
+      signUpFallbackRedirectUrl="/dashboard/overview"
+    >
       <html lang="en" className={`${inter.className} h-full antialiased`}>
         <body className="min-h-full bg-background text-foreground">{children}</body>
       </html>
