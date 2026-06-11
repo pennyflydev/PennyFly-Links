@@ -30,6 +30,9 @@ export default function ArtistPageEditor() {
   const [bio, setBio] = useState('')
   const [theme, setTheme] = useState('minimal')
   const [slug, setSlug] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
+  const [uploading, setUploading] = useState<'avatar' | 'cover' | null>(null)
   const [sections, setSections] = useState<Section[]>([])
 
   useEffect(() => {
@@ -43,6 +46,8 @@ export default function ArtistPageEditor() {
           setBio(artist.bio ?? '')
           setTheme(artist.theme ?? 'minimal')
           setSlug(artist.slug ?? '')
+          setAvatarUrl(artist.avatar_url ?? null)
+          setCoverUrl(artist.cover_url ?? null)
         }
         const loaded: Section[] = sections?.length
           ? sections
@@ -51,6 +56,27 @@ export default function ArtistPageEditor() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  async function uploadImage(kind: 'avatar' | 'cover', file: File) {
+    setUploading(kind)
+    setError('')
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('kind', kind)
+      const res = await fetch('/api/upload', { method: 'POST', body: form })
+      const data = await res.json()
+      if (res.ok) {
+        if (kind === 'avatar') setAvatarUrl(data.url)
+        else setCoverUrl(data.url)
+      } else {
+        setError(data.error ?? 'Upload failed')
+      }
+    } catch {
+      setError('Upload failed')
+    }
+    setUploading(null)
+  }
 
   function toggleSection(name: string) {
     setSections((prev) => prev.map((s) => (s.section === name ? { ...s, is_visible: !s.is_visible } : s)))
@@ -75,7 +101,7 @@ export default function ArtistPageEditor() {
         fetch('/api/artist', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ artist_name: artistName, bio, theme }),
+          body: JSON.stringify({ artist_name: artistName, bio, theme, avatar_url: avatarUrl, cover_url: coverUrl }),
         }),
         fetch('/api/sections', {
           method: 'PATCH',
@@ -130,6 +156,44 @@ export default function ArtistPageEditor() {
           </div>
         ) : (
           <div className="p-4 space-y-3">
+            {/* Images */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-2">Profile Photo</label>
+                <div className="flex items-center gap-3">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover border border-zinc-700" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                      <Music2 className="w-6 h-6 text-zinc-600" />
+                    </div>
+                  )}
+                  <label className="px-3 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors cursor-pointer flex items-center gap-2">
+                    {uploading === 'avatar' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Upload
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={(e) => e.target.files?.[0] && uploadImage('avatar', e.target.files[0])} />
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-2">Cover Image</label>
+                <div className="flex items-center gap-3">
+                  {coverUrl ? (
+                    <img src={coverUrl} alt="" className="w-24 h-12 rounded-lg object-cover border border-zinc-700" />
+                  ) : (
+                    <div className="w-24 h-12 rounded-lg bg-zinc-800 border border-zinc-700" />
+                  )}
+                  <label className="px-3 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors cursor-pointer flex items-center gap-2">
+                    {uploading === 'cover' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Upload
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={(e) => e.target.files?.[0] && uploadImage('cover', e.target.files[0])} />
+                  </label>
+                </div>
+              </div>
+            </div>
+
             {/* Artist name + bio */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
               <div>
@@ -218,9 +282,13 @@ export default function ArtistPageEditor() {
           className="w-[390px] min-h-[844px] rounded-[40px] border border-zinc-700 overflow-hidden shadow-2xl flex flex-col items-center pt-16 pb-8 px-6 text-white"
           style={{ background: activeTheme.bg }}
         >
-          <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-white/20 mb-4 flex items-center justify-center">
-            <Music2 className="w-10 h-10 text-white/40" />
-          </div>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="w-24 h-24 rounded-full object-cover border-2 border-white/20 mb-4" />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-white/20 mb-4 flex items-center justify-center">
+              <Music2 className="w-10 h-10 text-white/40" />
+            </div>
+          )}
           <p className="text-xl font-bold mb-1">{artistName || 'Your Artist Name'}</p>
           <p className="text-sm text-white/60 mb-6 text-center">{bio || 'Add a bio to tell visitors about yourself'}</p>
           <div className="w-full space-y-2">

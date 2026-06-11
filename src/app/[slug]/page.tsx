@@ -3,28 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist } from '@/lib/supabase/queries'
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
-
-const PLATFORM_LABELS: Record<string, string> = {
-  spotify: 'Spotify',
-  apple_music: 'Apple Music',
-  youtube_music: 'YouTube Music',
-  tidal: 'Tidal',
-  amazon_music: 'Amazon Music',
-  deezer: 'Deezer',
-  bandcamp: 'Bandcamp',
-  soundcloud: 'SoundCloud',
-}
-
-const PLATFORM_COLORS: Record<string, string> = {
-  spotify: 'bg-[#1DB954] hover:bg-[#1ed760]',
-  apple_music: 'bg-[#fc3c44] hover:bg-[#ff4d55]',
-  youtube_music: 'bg-[#FF0000] hover:bg-[#ff1a1a]',
-  tidal: 'bg-zinc-700 hover:bg-zinc-600',
-  amazon_music: 'bg-[#00A8E1] hover:bg-[#00b8f5]',
-  deezer: 'bg-[#A238FF] hover:bg-[#b04dff]',
-  bandcamp: 'bg-[#1da0c3] hover:bg-[#22b3d9]',
-  soundcloud: 'bg-[#ff5500] hover:bg-[#ff6600]',
-}
+import StreamingButtons from './StreamingButtons'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -157,14 +136,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
                 </div>
                 {/* Streaming buttons */}
                 {link.streaming_links?.length > 0 && (
-                  <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-                    {link.streaming_links.map((sl) => (
-                      <a key={sl.platform} href={sl.url} target="_blank" rel="noopener noreferrer"
-                        className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${PLATFORM_COLORS[sl.platform] ?? 'bg-zinc-700 hover:bg-zinc-600'}`}>
-                        {PLATFORM_LABELS[sl.platform] ?? sl.platform}
-                      </a>
-                    ))}
-                  </div>
+                  <StreamingButtons artistId={artist.id} promoLinkId={link.id} links={link.streaming_links} />
                 )}
               </div>
             ))}
