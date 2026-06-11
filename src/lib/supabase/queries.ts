@@ -1,15 +1,24 @@
 import { auth } from '@clerk/nextjs/server'
 import { createClient } from './server'
+import { createAdminClient } from './server'
 
 export async function getArtistForCurrentUser() {
   const { userId } = await auth()
   if (!userId) return null
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('clerk_id', userId)
+    .single()
+
+  if (!profile) return null
+
   const { data } = await supabase
     .from('artists')
-    .select('*, profiles!inner(clerk_id, role, plan)')
-    .eq('profiles.clerk_id', userId)
+    .select('*, profiles(clerk_id, role, plan)')
+    .eq('profile_id', profile.id)
     .single()
 
   return data
