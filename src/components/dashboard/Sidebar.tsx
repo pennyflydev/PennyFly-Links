@@ -24,7 +24,7 @@ const navItems = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname()
 
   const isActive = (href: string, exact = false) =>
@@ -63,18 +63,20 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="px-4 py-4 border-t border-zinc-800 space-y-3">
-        <Link
-          href="/roster"
-          className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
-            pathname.startsWith('/roster')
-              ? 'bg-yellow-400/10 text-yellow-400'
-              : 'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
-          )}
-        >
-          <Radio className="w-4 h-4 shrink-0" />
-          Label Roster
-        </Link>
+        {isAdmin && (
+          <Link
+            href="/roster"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
+              pathname.startsWith('/roster')
+                ? 'bg-yellow-400/10 text-yellow-400'
+                : 'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
+            )}
+          >
+            <Radio className="w-4 h-4 shrink-0" />
+            Label Roster
+          </Link>
+        )}
         <div className="flex items-center gap-3 px-3">
           <UserButton />
           <span className="text-xs text-zinc-500 truncate">Account</span>

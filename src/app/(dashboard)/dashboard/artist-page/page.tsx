@@ -1,91 +1,235 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Loader2, Check, ChevronUp, ChevronDown, Music2 } from 'lucide-react'
+
+type Section = { section: string; is_visible: boolean; sort_order: number }
+
+const SECTION_LABELS: Record<string, string> = {
+  bio: 'Bio',
+  flylinks: 'FlyLinks',
+  presave: 'Pre-Save',
+  custom_links: 'Custom Links',
+  email_capture: 'Email Capture',
+}
+
+const THEMES = [
+  { id: 'minimal', name: 'Minimal', colors: ['#3f3f46', '#52525b', '#71717a'], bg: '#09090b' },
+  { id: 'bold', name: 'Bold', colors: ['#f59e0b', '#f97316', '#eab308'], bg: 'linear-gradient(160deg,#1c1917,#451a03)' },
+  { id: 'elegant', name: 'Elegant', colors: ['#8b5cf6', '#7c3aed', '#6d28d9'], bg: 'linear-gradient(160deg,#1e1b2e,#2e1065)' },
+  { id: 'neon', name: 'Neon', colors: ['#22c55e', '#16a34a', '#15803d'], bg: 'linear-gradient(160deg,#0c1f17,#052e16)' },
+]
+
 export default function ArtistPageEditor() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
+
+  const [artistName, setArtistName] = useState('')
+  const [bio, setBio] = useState('')
+  const [theme, setTheme] = useState('minimal')
+  const [slug, setSlug] = useState('')
+  const [sections, setSections] = useState<Section[]>([])
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/artist').then((r) => r.json()),
+      fetch('/api/sections').then((r) => r.json()),
+    ])
+      .then(([{ artist }, { sections }]) => {
+        if (artist) {
+          setArtistName(artist.artist_name ?? '')
+          setBio(artist.bio ?? '')
+          setTheme(artist.theme ?? 'minimal')
+          setSlug(artist.slug ?? '')
+        }
+        const loaded: Section[] = sections?.length
+          ? sections
+          : Object.keys(SECTION_LABELS).map((s, i) => ({ section: s, is_visible: true, sort_order: i }))
+        setSections([...loaded].sort((a, b) => a.sort_order - b.sort_order))
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  function toggleSection(name: string) {
+    setSections((prev) => prev.map((s) => (s.section === name ? { ...s, is_visible: !s.is_visible } : s)))
+  }
+
+  function move(index: number, dir: -1 | 1) {
+    setSections((prev) => {
+      const next = [...prev]
+      const target = index + dir
+      if (target < 0 || target >= next.length) return prev
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next.map((s, i) => ({ ...s, sort_order: i }))
+    })
+  }
+
+  async function save() {
+    setSaving(true)
+    setError('')
+    setSaved(false)
+    try {
+      const [a, s] = await Promise.all([
+        fetch('/api/artist', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ artist_name: artistName, bio, theme }),
+        }),
+        fetch('/api/sections', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sections: sections.map((x, i) => ({ ...x, sort_order: i })) }),
+        }),
+      ])
+      if (a.ok && s.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2500)
+      } else {
+        setError('Could not save changes')
+      }
+    } catch {
+      setError('Could not save changes')
+    }
+    setSaving(false)
+  }
+
+  const activeTheme = THEMES.find((t) => t.id === theme) ?? THEMES[0]
+
   return (
     <div className="flex h-full">
       {/* Editor panel */}
       <div className="w-[380px] border-r border-zinc-800 overflow-y-auto bg-zinc-900/50">
         <div className="sticky top-0 z-10 bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 transition-colors">
-            Save
+          <button
+            onClick={save}
+            disabled={saving || loading}
+            className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 disabled:opacity-50 transition-colors"
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {saved ? <><Check className="w-4 h-4" /> Saved</> : 'Save'}
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 transition-colors">
-            View Live
-          </button>
+          {slug && (
+            <a
+              href={`/${slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 transition-colors"
+            >
+              View Live
+            </a>
+          )}
         </div>
 
-        <div className="p-4 space-y-3">
-          {/* Section order */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-white">Section Order</span>
-              <span className="text-xs text-zinc-500">Drag to reorder</span>
+        {error && <p className="m-4 text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">{error}</p>}
+
+        {loading ? (
+          <div className="flex items-center gap-2 text-zinc-500 text-sm p-6">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {/* Artist name + bio */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Artist Name</label>
+                <input
+                  value={artistName}
+                  onChange={(e) => setArtistName(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Bio</label>
+                <textarea
+                  rows={3}
+                  maxLength={300}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none"
+                />
+              </div>
             </div>
-            <div className="border-t border-zinc-800 divide-y divide-zinc-800">
-              {['Bio', 'FlyLinks', 'Pre-Save', 'Custom Links', 'Email Capture'].map((s) => (
-                <div key={s} className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-zinc-600 cursor-grab">⠿</span>
-                    <span className="text-sm text-zinc-300">{s}</span>
+
+            {/* Section order */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Section Order</span>
+                <span className="text-xs text-zinc-500">Reorder & toggle</span>
+              </div>
+              <div className="border-t border-zinc-800 divide-y divide-zinc-800">
+                {sections.map((s, i) => (
+                  <div key={s.section} className="flex items-center justify-between px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <button onClick={() => move(i, -1)} disabled={i === 0} className="text-zinc-600 hover:text-white disabled:opacity-30">
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => move(i, 1)} disabled={i === sections.length - 1} className="text-zinc-600 hover:text-white disabled:opacity-30">
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <span className="text-sm text-zinc-300">{SECTION_LABELS[s.section] ?? s.section}</span>
+                    </div>
+                    <button
+                      onClick={() => toggleSection(s.section)}
+                      className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${s.is_visible ? 'bg-yellow-400 justify-end' : 'bg-zinc-700 justify-start'}`}
+                    >
+                      <span className="w-4 h-4 bg-white rounded-full shadow" />
+                    </button>
                   </div>
-                  <button className="w-8 h-5 bg-yellow-400 rounded-full flex items-center justify-end pr-0.5 transition-colors">
-                    <span className="w-4 h-4 bg-white rounded-full shadow" />
+                ))}
+              </div>
+            </div>
+
+            {/* Theme */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3">
+                <span className="text-sm font-medium text-white">Theme</span>
+              </div>
+              <div className="border-t border-zinc-800 p-3 grid grid-cols-2 gap-2">
+                {THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTheme(t.id)}
+                    className={`p-3 rounded-lg border text-left transition-colors ${
+                      t.id === theme ? 'border-yellow-400 bg-zinc-800' : 'border-zinc-700 hover:border-zinc-600'
+                    }`}
+                  >
+                    <div className="flex gap-1 mb-2">
+                      {t.colors.map((c) => (
+                        <div key={c} className="w-4 h-4 rounded-full" style={{ background: c }} />
+                      ))}
+                    </div>
+                    <span className="text-xs font-medium text-zinc-300">{t.name}</span>
                   </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-
-          {/* Theme */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-            <div className="px-4 py-3">
-              <span className="text-sm font-medium text-white">Theme</span>
-            </div>
-            <div className="border-t border-zinc-800 p-3 grid grid-cols-2 gap-2">
-              {[
-                { name: 'Minimal', colors: ['#3f3f46', '#52525b', '#71717a'] },
-                { name: 'Bold', colors: ['#f59e0b', '#f97316', '#eab308'] },
-                { name: 'Elegant', colors: ['#8b5cf6', '#7c3aed', '#6d28d9'] },
-                { name: 'Neon', colors: ['#22c55e', '#16a34a', '#15803d'] },
-              ].map(({ name, colors }) => (
-                <button
-                  key={name}
-                  className={`p-3 rounded-lg border text-left transition-colors ${
-                    name === 'Minimal'
-                      ? 'border-yellow-400 bg-zinc-800'
-                      : 'border-zinc-700 hover:border-zinc-600'
-                  }`}
-                >
-                  <div className="flex gap-1 mb-2">
-                    {colors.map((c) => (
-                      <div key={c} className="w-4 h-4 rounded-full" style={{ background: c }} />
-                    ))}
-                  </div>
-                  <span className="text-xs font-medium text-zinc-300">{name}</span>
-                  <p className="text-xs text-zinc-500">Aa Bb Cc</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Collapsible settings */}
-          {['Artist Name', 'Bio', 'Typography', 'Cover Image', 'Profile Photo', 'Background', 'Social Links', 'Custom Links', 'Email Capture'].map((section) => (
-            <div key={section} className="bg-zinc-900 border border-zinc-800 rounded-xl">
-              <button className="w-full flex items-center justify-between px-4 py-3">
-                <span className="text-sm font-medium text-white">{section}</span>
-                <span className="text-zinc-500 text-xs">›</span>
-              </button>
-            </div>
-          ))}
-        </div>
+        )}
       </div>
 
       {/* Live preview */}
       <div className="flex-1 bg-zinc-950 flex flex-col items-center justify-start p-8 overflow-y-auto">
         <p className="text-xs text-zinc-600 uppercase tracking-widest mb-6 font-medium">Live Preview</p>
-        <div className="w-[390px] min-h-[844px] bg-zinc-900 rounded-[40px] border border-zinc-700 overflow-hidden shadow-2xl flex flex-col items-center pt-16 pb-8 px-6">
-          <div className="w-24 h-24 rounded-full bg-zinc-700 mb-4 border-2 border-zinc-600" />
-          <p className="text-xl font-bold text-white mb-1">Your Artist Name</p>
-          <p className="text-sm text-zinc-500 mb-6 text-center">Add a bio to tell visitors about yourself</p>
-          <p className="text-sm text-zinc-600">No releases yet</p>
+        <div
+          className="w-[390px] min-h-[844px] rounded-[40px] border border-zinc-700 overflow-hidden shadow-2xl flex flex-col items-center pt-16 pb-8 px-6 text-white"
+          style={{ background: activeTheme.bg }}
+        >
+          <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-white/20 mb-4 flex items-center justify-center">
+            <Music2 className="w-10 h-10 text-white/40" />
+          </div>
+          <p className="text-xl font-bold mb-1">{artistName || 'Your Artist Name'}</p>
+          <p className="text-sm text-white/60 mb-6 text-center">{bio || 'Add a bio to tell visitors about yourself'}</p>
+          <div className="w-full space-y-2">
+            {sections.filter((s) => s.is_visible && s.section !== 'bio').map((s) => (
+              <div key={s.section} className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white/70">
+                {SECTION_LABELS[s.section]}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
