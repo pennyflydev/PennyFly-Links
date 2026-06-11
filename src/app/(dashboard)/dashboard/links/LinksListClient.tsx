@@ -119,6 +119,9 @@ export default function LinksListClient({
                   </a>
                 </>
               )}
+              <Link href={`/dashboard/links/${link.id}/edit`} className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors">
+                Edit
+              </Link>
               <button
                 onClick={() => togglePublish(link)}
                 disabled={busy === link.id}

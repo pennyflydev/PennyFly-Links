@@ -3,6 +3,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getArtistForCurrentUser } from '@/lib/supabase/queries'
 
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const artist = await getArtistForCurrentUser()
+  if (!artist) return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
+
+  const { id } = await params
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('presave_campaigns')
+    .select('*')
+    .eq('id', id)
+    .eq('artist_id', artist.id)
+    .single()
+
+  if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json({ campaign: data })
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

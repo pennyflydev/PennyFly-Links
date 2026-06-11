@@ -81,6 +81,9 @@ export default function PresaveListClient({ initialCampaigns }: { initialCampaig
             <a href={`/pre-save/${c.slug}`} target="_blank" className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors">
               View Page
             </a>
+            <Link href={`/dashboard/pre-save/${c.id}/edit`} className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors">
+              Edit
+            </Link>
             <button
               onClick={() => toggleActive(c)}
               disabled={busy === c.id}
