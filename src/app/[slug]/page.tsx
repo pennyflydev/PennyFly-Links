@@ -4,7 +4,7 @@ import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
 import StreamingButtons from './StreamingButtons'
-import PixelScripts from './PixelScripts'
+import PixelScripts from '@/components/PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params

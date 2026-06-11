@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { Music2 } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
 import StreamingButtons from '../StreamingButtons'
-import PixelScripts from '../PixelScripts'
+import PixelScripts from '@/components/PixelScripts'
 
 async function getRelease(artistSlug: string, linkSlug: string) {
   const supabase = createAdminClient()

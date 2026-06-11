@@ -2,12 +2,13 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
 import PresaveClient from './PresaveClient'
+import PixelScripts from '@/components/PixelScripts'
 
 async function getCampaign(slug: string) {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('presave_campaigns')
-    .select('*, artists(artist_name, avatar_url, slug)')
+    .select('*, artists(artist_name, avatar_url, slug, meta_pixel_id, tiktok_pixel_id, ga_measurement_id)')
     .eq('slug', slug)
     .single()
   return data
@@ -31,7 +32,13 @@ export default async function PresavePage({ params }: { params: Promise<{ slug: 
   if (!campaign) notFound()
 
   return (
-    <PresaveClient
+    <>
+      <PixelScripts
+        metaPixelId={campaign.artists?.meta_pixel_id}
+        tiktokPixelId={campaign.artists?.tiktok_pixel_id}
+        gaMeasurementId={campaign.artists?.ga_measurement_id}
+      />
+      <PresaveClient
       slug={campaign.slug}
       title={campaign.title}
       artistName={campaign.artists?.artist_name ?? ''}
@@ -43,6 +50,7 @@ export default async function PresavePage({ params }: { params: Promise<{ slug: 
       showFanCount={campaign.show_fan_count}
       saveCount={campaign.save_count}
       isActive={campaign.is_active}
-    />
+      />
+    </>
   )
 }
