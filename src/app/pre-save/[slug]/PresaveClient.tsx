@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Music2, Check, Loader2 } from 'lucide-react'
+import { Music2, Check } from 'lucide-react'
 
 type Props = {
+  campaignId: string
   slug: string
   title: string
   artistName: string
@@ -15,6 +16,7 @@ type Props = {
   showFanCount: boolean
   saveCount: number
   isActive: boolean
+  connected: boolean
 }
 
 function getCountdown(target: Date) {
@@ -30,10 +32,6 @@ function getCountdown(target: Date) {
 export default function PresaveClient(props: Props) {
   const releaseAt = new Date(props.releaseDate)
   const [countdown, setCountdown] = useState(() => getCountdown(releaseAt))
-  const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
-  const [error, setError] = useState('')
-  const [count, setCount] = useState(props.saveCount)
 
   const isReleased = countdown === null
 
@@ -42,30 +40,6 @@ export default function PresaveClient(props: Props) {
     return () => clearInterval(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.releaseDate])
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setStatus('saving')
-    setError('')
-    try {
-      const res = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: props.slug, email }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setStatus('done')
-        if (!data.alreadySaved) setCount((c) => c + 1)
-      } else {
-        setStatus('error')
-        setError(data.error ?? 'Something went wrong')
-      }
-    } catch {
-      setStatus('error')
-      setError('Something went wrong')
-    }
-  }
 
   const formattedDate = releaseAt.toLocaleDateString('en-US', {
     month: 'long',
@@ -121,8 +95,8 @@ export default function PresaveClient(props: Props) {
           {isReleased ? `Released ${formattedDate}` : `Releases ${formattedDate}`}
         </p>
 
-        {/* Capture form / success */}
-        {status === 'done' ? (
+        {/* Connect / success */}
+        {props.connected ? (
           <div className="w-full bg-green-500/10 border border-green-500/20 rounded-2xl p-6 flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
               <Check className="w-5 h-5 text-green-400" />
@@ -130,8 +104,8 @@ export default function PresaveClient(props: Props) {
             <p className="font-semibold text-white">You&apos;re all set!</p>
             <p className="text-sm text-zinc-400">
               {isReleased
-                ? "We'll send you the link to listen."
-                : "We'll remind you the moment it drops."}
+                ? "Added to your Spotify library — enjoy!"
+                : "We'll add it to your Spotify library the moment it drops."}
             </p>
             {props.spotifyUrl && (
               <a
@@ -145,32 +119,25 @@ export default function PresaveClient(props: Props) {
             )}
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-yellow-400/50 text-center"
-            />
-            <button
-              type="submit"
-              disabled={status === 'saving'}
-              className="w-full py-3 bg-yellow-400 text-black rounded-xl font-semibold hover:bg-yellow-300 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          <div className="w-full flex flex-col gap-3">
+            <a
+              href={`/api/auth/spotify/start?type=presave&id=${props.campaignId}`}
+              className="w-full py-3.5 bg-[#1DB954] hover:bg-[#1ed760] text-white rounded-full font-semibold transition-colors flex items-center justify-center gap-2"
             >
-              {status === 'saving' && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isReleased ? 'Get the link' : 'Pre-Save Now'}
-            </button>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
-          </form>
+              <Music2 className="w-4 h-4" />
+              {isReleased ? 'Save on Spotify' : 'Pre-Save on Spotify'}
+            </a>
+            <p className="text-xs text-zinc-600">
+              You&apos;ll sign in with Spotify — {isReleased ? 'the song is added to your library instantly.' : 'we add the release to your library on drop day.'}
+            </p>
+          </div>
         )}
 
         {/* Fan counter */}
-        {props.showFanCount && count > 0 && (
+        {props.showFanCount && props.saveCount > 0 && (
           <p className="text-sm text-zinc-500">
-            <span className="text-white font-semibold">{count.toLocaleString()}</span>{' '}
-            {count === 1 ? 'fan has' : 'fans have'} pre-saved this release
+            <span className="text-white font-semibold">{props.saveCount.toLocaleString()}</span>{' '}
+            {props.saveCount === 1 ? 'fan has' : 'fans have'} pre-saved this release
           </p>
         )}
 

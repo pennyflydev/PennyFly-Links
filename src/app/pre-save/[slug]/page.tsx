@@ -26,8 +26,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export default async function PresavePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PresavePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ connected?: string }>
+}) {
   const { slug } = await params
+  const { connected } = await searchParams
   const campaign = await getCampaign(slug)
   if (!campaign) notFound()
 
@@ -39,17 +46,19 @@ export default async function PresavePage({ params }: { params: Promise<{ slug: 
         gaMeasurementId={campaign.artists?.ga_measurement_id}
       />
       <PresaveClient
-      slug={campaign.slug}
-      title={campaign.title}
-      artistName={campaign.artists?.artist_name ?? ''}
-      artistSlug={campaign.artists?.slug ?? null}
-      coverUrl={campaign.cover_url}
-      releaseDate={campaign.release_date}
-      description={campaign.description}
-      spotifyUrl={campaign.spotify_url}
-      showFanCount={campaign.show_fan_count}
-      saveCount={campaign.save_count}
-      isActive={campaign.is_active}
+        campaignId={campaign.id}
+        slug={campaign.slug}
+        title={campaign.title}
+        artistName={campaign.artists?.artist_name ?? ''}
+        artistSlug={campaign.artists?.slug ?? null}
+        coverUrl={campaign.cover_url}
+        releaseDate={campaign.release_date}
+        description={campaign.description}
+        spotifyUrl={campaign.spotify_url}
+        showFanCount={campaign.show_fan_count}
+        saveCount={campaign.save_count}
+        isActive={campaign.is_active}
+        connected={connected === '1'}
       />
     </>
   )

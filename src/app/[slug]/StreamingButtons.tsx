@@ -43,18 +43,24 @@ export default function StreamingButtons({
 
   return (
     <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-      {links.map((sl) => (
-        <a
-          key={sl.platform}
-          href={sl.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackClick(sl.platform)}
-          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${PLATFORM_COLORS[sl.platform] ?? 'bg-zinc-700 hover:bg-zinc-600'}`}
-        >
-          {PLATFORM_LABELS[sl.platform] ?? sl.platform}
-        </a>
-      ))}
+      {links.map((sl) => {
+        // Spotify routes through our OAuth connector so we capture the fan's
+        // verified email + save the track. Other platforms open directly.
+        const isSpotify = sl.platform === 'spotify'
+        const href = isSpotify ? `/api/auth/spotify/start?type=link&id=${promoLinkId}` : sl.url
+        return (
+          <a
+            key={sl.platform}
+            href={href}
+            target={isSpotify ? undefined : '_blank'}
+            rel="noopener noreferrer"
+            onClick={() => trackClick(sl.platform)}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${PLATFORM_COLORS[sl.platform] ?? 'bg-zinc-700 hover:bg-zinc-600'}`}
+          >
+            {PLATFORM_LABELS[sl.platform] ?? sl.platform}
+          </a>
+        )
+      })}
     </div>
   )
 }
