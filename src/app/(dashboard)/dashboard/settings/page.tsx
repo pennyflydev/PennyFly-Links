@@ -1,15 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { User, Globe, Bell, Plug, ShieldCheck, Loader2, Check, X } from 'lucide-react'
+import { User, Globe, Bell, Plug, ShieldCheck, CreditCard, Loader2, Check, X } from 'lucide-react'
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'domains', label: 'Domains', icon: Globe },
+  { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'integrations', label: 'Integrations', icon: Plug },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'account', label: 'Account', icon: ShieldCheck },
 ]
+
+const BILLING_PLANS = [
+  { id: 'starter', name: 'Starter', monthly: 9, blurb: '3 FlyLinks, pre-saves, analytics' },
+  { id: 'pro', name: 'Pro', monthly: 19, blurb: 'Unlimited links, integrations, custom domain' },
+  { id: 'label', name: 'Label', monthly: 49, blurb: 'Up to 10 artists, roster dashboard' },
+] as const
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
@@ -25,9 +32,19 @@ export default function SettingsPage() {
   const [metaPixel, setMetaPixel] = useState('')
   const [tiktokPixel, setTiktokPixel] = useState('')
   const [gaId, setGaId] = useState('')
+  const [plan, setPlan] = useState('starter')
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly')
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingMsg, setBillingMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('billing')
+    if (q === 'success') { setActiveTab('billing'); setBillingMsg('Subscription updated — thank you!') }
+    if (q === 'cancelled') { setActiveTab('billing'); setBillingMsg('Checkout cancelled.') }
+  }, [])
 
   useEffect(() => {
     fetch('/api/artist')
@@ -42,6 +59,7 @@ export default function SettingsPage() {
           setMetaPixel(artist.meta_pixel_id ?? '')
           setTiktokPixel(artist.tiktok_pixel_id ?? '')
           setGaId(artist.ga_measurement_id ?? '')
+          setPlan(artist.profiles?.plan ?? 'starter')
         }
       })
       .finally(() => setLoading(false))
@@ -103,6 +121,44 @@ export default function SettingsPage() {
       setError('Could not save')
     }
     setSaving(false)
+  }
+
+  async function startCheckout(planId: string) {
+    setBillingBusy(true)
+    setError('')
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId, interval: billingInterval }),
+      })
+      const data = await res.json()
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
+      }
+      setError(data.error ?? 'Could not start checkout')
+    } catch {
+      setError('Could not start checkout')
+    }
+    setBillingBusy(false)
+  }
+
+  async function openPortal() {
+    setBillingBusy(true)
+    setError('')
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
+      }
+      setError(data.error ?? 'Could not open billing portal')
+    } catch {
+      setError('Could not open billing portal')
+    }
+    setBillingBusy(false)
   }
 
   async function saveSubdomain() {
@@ -250,6 +306,71 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-sm text-zinc-500">Connect your own domain (e.g. music.yourname.com). Available on Pro and above.</p>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'billing' && (
+            <div className="space-y-6">
+              {billingMsg && (
+                <p className="text-sm bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 rounded-lg px-4 py-3">{billingMsg}</p>
+              )}
+
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-zinc-400">Current plan</p>
+                  <p className="text-xl font-bold text-white capitalize">{plan}</p>
+                </div>
+                {plan === 'signed' ? (
+                  <span className="px-3 py-1 bg-yellow-400/20 text-yellow-400 rounded-full text-xs font-medium">Covered by your label</span>
+                ) : (
+                  <button onClick={openPortal} disabled={billingBusy}
+                    className="px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 disabled:opacity-50 transition-colors flex items-center gap-2">
+                    {billingBusy && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Manage subscription
+                  </button>
+                )}
+              </div>
+
+              {plan !== 'signed' && (
+                <>
+                  <div className="flex items-center justify-center gap-2">
+                    {(['monthly', 'yearly'] as const).map((iv) => (
+                      <button key={iv} onClick={() => setBillingInterval(iv)}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${billingInterval === iv ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-white'}`}>
+                        {iv === 'monthly' ? 'Monthly' : 'Yearly'}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid gap-4">
+                    {BILLING_PLANS.map((p) => {
+                      const isCurrent = plan === p.id
+                      const price = billingInterval === 'yearly' ? Math.round(p.monthly * 10) : p.monthly
+                      return (
+                        <div key={p.id} className={`rounded-xl border p-5 flex items-center justify-between ${isCurrent ? 'border-yellow-400 bg-yellow-400/5' : 'border-zinc-800 bg-zinc-900'}`}>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-white">{p.name}</span>
+                              <span className="text-zinc-500 text-sm">${price}/{billingInterval === 'yearly' ? 'yr' : 'mo'}</span>
+                            </div>
+                            <p className="text-xs text-zinc-500 mt-0.5">{p.blurb}</p>
+                          </div>
+                          {isCurrent ? (
+                            <span className="px-3 py-1.5 text-xs font-medium text-yellow-400">Current</span>
+                          ) : (
+                            <button onClick={() => startCheckout(p.id)} disabled={billingBusy}
+                              className="px-4 py-2 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 disabled:opacity-50 transition-colors flex items-center gap-2">
+                              {billingBusy && <Loader2 className="w-4 h-4 animate-spin" />}
+                              Choose {p.name}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-zinc-600 text-center">Secure checkout via Stripe. Cancel anytime.</p>
+                </>
+              )}
             </div>
           )}
 

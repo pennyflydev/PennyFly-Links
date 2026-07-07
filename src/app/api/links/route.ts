@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getArtistForCurrentUser } from '@/lib/supabase/queries'
 import { slugify } from '@/lib/utils'
+import { limitsForPlan } from '@/lib/stripe'
 
 export async function GET() {
   const { userId } = await auth()
@@ -35,6 +36,22 @@ export async function POST(req: NextRequest) {
 
   const finalSlug = slug || slugify(title)
   const supabase = createAdminClient()
+
+  // Enforce the plan's link limit.
+  const plan = artist.profiles?.plan ?? 'starter'
+  const linkLimit = limitsForPlan(plan).links
+  if (linkLimit !== Infinity) {
+    const { count } = await supabase
+      .from('promo_links')
+      .select('id', { count: 'exact', head: true })
+      .eq('artist_id', artist.id)
+    if ((count ?? 0) >= linkLimit) {
+      return NextResponse.json(
+        { error: `Your ${plan} plan includes ${linkLimit} FlyLinks. Upgrade to add more.`, code: 'plan_limit' },
+        { status: 403 }
+      )
+    }
+  }
 
   const { data: link, error } = await supabase
     .from('promo_links')

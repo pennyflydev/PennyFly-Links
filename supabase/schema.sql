@@ -17,6 +17,8 @@ create table profiles (
   onboarded    boolean not null default false,
   stripe_customer_id    text,
   stripe_subscription_id text,
+  subscription_status   text,
+  current_period_end    timestamptz,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
