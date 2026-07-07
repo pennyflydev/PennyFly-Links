@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
 import RosterInvite, { type Invite } from './RosterInvite'
 import ActAsButton from './ActAsButton'
+import RoleControl from './RoleControl'
 
 type RosterArtist = {
   id: string
@@ -11,7 +12,8 @@ type RosterArtist = {
   slug: string
   is_signed: boolean
   created_at: string
-  profiles: { email: string; plan: string } | null
+  profile_id: string
+  profiles: { email: string; plan: string; role: string } | null
   subscribers: { count: number }[]
 }
 
@@ -26,7 +28,7 @@ export default async function RosterPage() {
 
   let artistsQuery = supabase
     .from('artists')
-    .select('id, artist_name, slug, is_signed, created_at, profiles(email, plan), subscribers(count)')
+    .select('id, artist_name, slug, is_signed, created_at, profile_id, profiles(email, plan, role), subscribers(count)')
     .order('created_at', { ascending: false })
   if (!isAdmin) artistsQuery = artistsQuery.eq('label_id', labelId)
 
@@ -138,6 +140,9 @@ export default async function RosterPage() {
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-2">
+                      {isAdmin && a.profiles && (
+                        <RoleControl profileId={a.profile_id} role={a.profiles.role} />
+                      )}
                       <Link href={`/roster/${a.id}`} className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors">
                         View
                       </Link>
