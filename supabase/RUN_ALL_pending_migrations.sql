@@ -159,6 +159,18 @@ create policy "Anyone can read published products" on products for select using 
 alter table artists add column if not exists shopify_domain text;
 alter table artists add column if not exists shopify_token  text;
 
+-- ── 0018 · Web push subscriptions ───────────────────────────────────────
+create table if not exists push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  artist_id  uuid not null references artists(id) on delete cascade,
+  endpoint   text not null,
+  p256dh     text not null,
+  auth       text not null,
+  created_at timestamptz not null default now(),
+  unique (artist_id, endpoint)
+);
+alter table push_subscriptions enable row level security;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

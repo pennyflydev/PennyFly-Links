@@ -8,6 +8,7 @@ import { toMediaEmbed, deviceFromUA, fontFamilyFor, buttonRadiusFor } from '@/li
 import { fetchShopifyProducts, formatShopifyPrice } from '@/lib/shopify/storefront'
 import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
+import DropAlerts from './DropAlerts'
 import PixelScripts from '@/components/PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -110,6 +111,9 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
             )}
           </div>
         )}
+
+        {/* Drop alerts */}
+        <DropAlerts slug={artist.slug} />
 
         {/* Pre-save campaigns */}
         {sectionVisible('presave') && presaves.length > 0 && (
