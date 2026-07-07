@@ -29,6 +29,7 @@ export default function ArtistPageEditor() {
   const [artistName, setArtistName] = useState('')
   const [bio, setBio] = useState('')
   const [theme, setTheme] = useState('minimal')
+  const [bgValue, setBgValue] = useState('#09090b')
   const [slug, setSlug] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
@@ -51,6 +52,7 @@ export default function ArtistPageEditor() {
           setArtistName(artist.artist_name ?? '')
           setBio(artist.bio ?? '')
           setTheme(artist.theme ?? 'minimal')
+          setBgValue(artist.background_value || '#09090b')
           setSlug(artist.slug ?? '')
           setAvatarUrl(artist.avatar_url ?? null)
           setCoverUrl(artist.cover_url ?? null)
@@ -110,7 +112,11 @@ export default function ArtistPageEditor() {
         fetch('/api/artist', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ artist_name: artistName, bio, theme, avatar_url: avatarUrl, cover_url: coverUrl }),
+          body: JSON.stringify({
+            artist_name: artistName, bio, theme, avatar_url: avatarUrl, cover_url: coverUrl,
+            background_type: bgValue.includes('gradient') ? 'gradient' : 'color',
+            background_value: bgValue,
+          }),
         }),
         fetch('/api/sections', {
           method: 'PATCH',
@@ -145,7 +151,6 @@ export default function ArtistPageEditor() {
     setSaving(false)
   }
 
-  const activeTheme = THEMES.find((t) => t.id === theme) ?? THEMES[0]
 
   return (
     <div className="flex h-full">
@@ -271,28 +276,54 @@ export default function ArtistPageEditor() {
               </div>
             </div>
 
-            {/* Theme */}
+            {/* Theme & background */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
               <div className="px-4 py-3">
-                <span className="text-sm font-medium text-white">Theme</span>
+                <span className="text-sm font-medium text-white">Theme &amp; background</span>
               </div>
               <div className="border-t border-zinc-800 p-3 grid grid-cols-2 gap-2">
                 {THEMES.map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => setTheme(t.id)}
+                    onClick={() => { setTheme(t.id); setBgValue(t.bg) }}
                     className={`p-3 rounded-lg border text-left transition-colors ${
                       t.id === theme ? 'border-yellow-400 bg-zinc-800' : 'border-zinc-700 hover:border-zinc-600'
                     }`}
                   >
-                    <div className="flex gap-1 mb-2">
-                      {t.colors.map((c) => (
-                        <div key={c} className="w-4 h-4 rounded-full" style={{ background: c }} />
-                      ))}
-                    </div>
+                    <div className="w-full h-8 rounded-md mb-2 border border-white/10" style={{ background: t.bg }} />
                     <span className="text-xs font-medium text-zinc-300">{t.name}</span>
                   </button>
                 ))}
+              </div>
+              <div className="border-t border-zinc-800 p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-zinc-400">Custom colour</span>
+                  <input
+                    type="color"
+                    value={bgValue.includes('gradient') ? '#09090b' : bgValue}
+                    onChange={(e) => setBgValue(e.target.value)}
+                    className="w-9 h-7 rounded bg-transparent border border-zinc-700 cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-zinc-400">Gradients</span>
+                  <div className="grid grid-cols-4 gap-2 mt-1.5">
+                    {[
+                      'linear-gradient(160deg,#0f172a,#020617)',
+                      'linear-gradient(160deg,#3b0764,#1e1b4b)',
+                      'linear-gradient(160deg,#450a0a,#1c1917)',
+                      'linear-gradient(160deg,#052e16,#022c22)',
+                      'linear-gradient(160deg,#0c4a6e,#082f49)',
+                      'linear-gradient(160deg,#4a044e,#500724)',
+                      'linear-gradient(160deg,#292524,#0c0a09)',
+                      'linear-gradient(160deg,#1e3a8a,#172554)',
+                    ].map((g) => (
+                      <button key={g} onClick={() => setBgValue(g)}
+                        className={`h-8 rounded-md border transition-colors ${bgValue === g ? 'border-yellow-400' : 'border-white/10 hover:border-white/30'}`}
+                        style={{ background: g }} />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -397,7 +428,7 @@ export default function ArtistPageEditor() {
         <p className="text-xs text-zinc-600 uppercase tracking-widest mb-6 font-medium">Live Preview</p>
         <div
           className="w-[390px] min-h-[844px] rounded-[40px] border border-zinc-700 overflow-hidden shadow-2xl flex flex-col items-center pt-16 pb-8 px-6 text-white"
-          style={{ background: activeTheme.bg }}
+          style={{ background: bgValue }}
         >
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="w-24 h-24 rounded-full object-cover border-2 border-white/20 mb-4" />
