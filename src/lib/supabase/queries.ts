@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
 import { createClient } from './server'
@@ -8,13 +9,17 @@ export const IMPERSONATE_COOKIE = 'impersonate_artist_id'
 export type CurrentProfile = { id: string; role: string; clerk_id: string; onboarded: boolean } | null
 
 // Resolve the logged-in user's profile (the real account, never impersonated).
-export async function getCurrentProfile(): Promise<CurrentProfile> {
+// Wrapped in cache() so the 3+ callers in one request share a single query.
+export const getCurrentProfile = cache(async (): Promise<CurrentProfile> => {
   const { userId } = await auth()
   if (!userId) return null
   const supabase = createAdminClient()
-  const { data } = await supabase.from('profiles').select('id, role, clerk_id, onboarded').eq('clerk_id', userId).single()
-  return data
-}
+  // select('*') so we don't hard-depend on columns from later migrations
+  // (e.g. `onboarded`); missing ones simply come back undefined.
+  const { data } = await supabase.from('profiles').select('*').eq('clerk_id', userId).single()
+  if (!data) return null
+  return { id: data.id, role: data.role, clerk_id: data.clerk_id, onboarded: data.onboarded ?? true }
+})
 
 // Label account owned by this profile (if any).
 export async function getLabelForProfile(profileId: string) {
@@ -39,7 +44,8 @@ export async function canManageArtist(
 
 // The artist whose dashboard the current request acts on.
 // Honors an impersonation cookie when the caller is authorized to use it.
-export async function getArtistForCurrentUser() {
+// Cached per-request so layout + page don't each re-run it.
+export const getArtistForCurrentUser = cache(async () => {
   const profile = await getCurrentProfile()
   if (!profile) return null
 
@@ -63,7 +69,7 @@ export async function getArtistForCurrentUser() {
     .single()
 
   return data
-}
+})
 
 // Banner context: is the current request impersonating, and as whom?
 export async function getImpersonationContext() {
