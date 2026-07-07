@@ -69,6 +69,8 @@ create table artists (
   hide_branding      boolean not null default false,
   font               text not null default 'sans',
   button_style       text not null default 'rounded',
+  shopify_domain     text,
+  shopify_token      text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );

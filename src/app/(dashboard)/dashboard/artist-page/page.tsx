@@ -44,6 +44,8 @@ export default function ArtistPageEditor() {
   const [seoTitle, setSeoTitle] = useState('')
   const [seoDescription, setSeoDescription] = useState('')
   const [hideBranding, setHideBranding] = useState(false)
+  const [shopifyDomain, setShopifyDomain] = useState('')
+  const [shopifyToken, setShopifyToken] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -68,6 +70,8 @@ export default function ArtistPageEditor() {
           setSeoTitle(artist.seo_title ?? '')
           setSeoDescription(artist.seo_description ?? '')
           setHideBranding(artist.hide_branding ?? false)
+          setShopifyDomain(artist.shopify_domain ?? '')
+          setShopifyToken(artist.shopify_token ?? '')
         }
         const loaded: Section[] = sections?.length
           ? sections
@@ -131,6 +135,7 @@ export default function ArtistPageEditor() {
             background_value: bgValue,
             seo_title: seoTitle, seo_description: seoDescription, hide_branding: hideBranding,
             font, button_style: buttonStyle,
+            shopify_domain: shopifyDomain.trim() || null, shopify_token: shopifyToken.trim() || null,
           }),
         }),
         fetch('/api/sections', {
@@ -518,6 +523,29 @@ export default function ArtistPageEditor() {
                     <span className="w-4 h-4 bg-white rounded-full shadow" />
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Connect Shopify (merch) */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Merch · Shopify</span>
+                {shopifyDomain && shopifyToken && <span className="text-xs text-green-400">Connected</span>}
+              </div>
+              <div className="border-t border-zinc-800 p-3 space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Store domain</label>
+                  <input value={shopifyDomain} onChange={(e) => setShopifyDomain(e.target.value)} placeholder="your-store.myshopify.com"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Storefront access token</label>
+                  <input value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} placeholder="Storefront API token"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                </div>
+                <p className="text-[11px] text-zinc-600 leading-relaxed">
+                  In Shopify admin → Settings → Apps → Develop apps → create an app → enable the <b>Storefront API</b> (read products) → copy the Storefront access token. Your merch then appears on your page automatically. Printful items sync through Shopify too.
+                </p>
               </div>
             </div>
           </div>

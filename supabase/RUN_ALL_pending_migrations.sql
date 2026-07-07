@@ -155,6 +155,10 @@ alter table products enable row level security;
 drop policy if exists "Anyone can read published products" on products;
 create policy "Anyone can read published products" on products for select using (is_published = true);
 
+-- ── 0017 · Shopify merch connector ──────────────────────────────────────
+alter table artists add column if not exists shopify_domain text;
+alter table artists add column if not exists shopify_token  text;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

@@ -5,6 +5,7 @@ import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
 import { toMediaEmbed, deviceFromUA, fontFamilyFor, buttonRadiusFor } from '@/lib/utils'
+import { fetchShopifyProducts, formatShopifyPrice } from '@/lib/shopify/storefront'
 import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
 import PixelScripts from '@/components/PixelScripts'
@@ -60,6 +61,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
 
   const pageStyle = { ...bg, fontFamily: fontFamilyFor(artist.font) }
   const radiusClass = buttonRadiusFor(artist.button_style)
+
+  // Live merch from the artist's connected Shopify store.
+  const shopifyProducts = artist.shopify_domain && artist.shopify_token
+    ? await fetchShopifyProducts(artist.shopify_domain, artist.shopify_token)
+    : []
 
   const socialIcons: Record<string, React.ElementType> = {
     website: Globe,
@@ -190,6 +196,29 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
                   )}
                 </div>
               ))}
+          </div>
+        )}
+
+        {/* Merch (live from Shopify) */}
+        {shopifyProducts.length > 0 && (
+          <div className="w-full space-y-2">
+            <p className="text-xs font-medium text-white/50 uppercase tracking-wider px-1">Merch</p>
+            <div className="grid grid-cols-2 gap-2">
+              {shopifyProducts.map((pr) => (
+                <a key={pr.id} href={pr.url} target="_blank" rel="noopener noreferrer"
+                  className={`bg-white/10 border border-white/20 ${radiusClass} overflow-hidden hover:bg-white/15 transition-colors`}>
+                  {pr.image ? (
+                    <img src={pr.image} alt={pr.title} className="w-full aspect-square object-cover" />
+                  ) : (
+                    <div className="w-full aspect-square bg-white/10 flex items-center justify-center"><Music2 className="w-6 h-6 text-white/30" /></div>
+                  )}
+                  <div className="p-2.5">
+                    <p className="text-sm font-medium truncate">{pr.title}</p>
+                    <p className="text-xs text-white/60">{formatShopifyPrice(pr.price, pr.currency)}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         )}
 
