@@ -82,6 +82,20 @@ export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?
           <Gift className="w-4 h-4 shrink-0" />
           Refer &amp; earn
         </Link>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
+              pathname === '/admin'
+                ? 'bg-yellow-400/10 text-yellow-400'
+                : 'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
+            )}
+          >
+            <BarChart3 className="w-4 h-4 shrink-0" />
+            Platform
+          </Link>
+        )}
         {(isAdmin || isLabel) && (
           <Link
             href="/roster"
@@ -93,7 +107,7 @@ export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?
             )}
           >
             <Radio className="w-4 h-4 shrink-0" />
-            {isAdmin ? 'Admin · All Artists' : 'My Roster'}
+            {isAdmin ? 'All Artists' : 'My Roster'}
           </Link>
         )}
         <div className="flex items-center gap-3 px-3">
