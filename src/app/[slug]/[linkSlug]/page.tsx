@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { Music2 } from 'lucide-react'
@@ -33,11 +34,12 @@ export async function generateMetadata({
   }
 }
 
-function trackView(artistId: string, promoLinkId: string) {
+async function trackView(artistId: string, promoLinkId: string) {
   const supabase = createAdminClient()
+  const country = (await headers()).get('x-vercel-ip-country') ?? null
   supabase
     .from('analytics_events')
-    .insert({ artist_id: artistId, event_type: 'view', promo_link_id: promoLinkId })
+    .insert({ artist_id: artistId, event_type: 'view', promo_link_id: promoLinkId, country })
     .then(async () => {
       const { data } = await supabase.from('promo_links').select('view_count').eq('id', promoLinkId).single()
       if (data) await supabase.from('promo_links').update({ view_count: (data.view_count ?? 0) + 1 }).eq('id', promoLinkId)

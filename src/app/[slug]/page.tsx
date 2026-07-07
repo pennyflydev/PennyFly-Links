@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist } from '@/lib/supabase/queries'
 import { Music2, Globe, ExternalLink } from 'lucide-react'
@@ -19,7 +20,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function trackView(artistId: string) {
   const supabase = createAdminClient()
-  await supabase.from('analytics_events').insert({ artist_id: artistId, event_type: 'view' })
+  const country = (await headers()).get('x-vercel-ip-country') ?? null
+  await supabase.from('analytics_events').insert({ artist_id: artistId, event_type: 'view', country })
 }
 
 export default async function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {

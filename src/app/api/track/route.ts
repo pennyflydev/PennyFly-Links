@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     promo_link_id: promoLinkId ?? null,
     platform: platform ?? null,
     referrer: req.headers.get('referer') ?? null,
+    country: req.headers.get('x-vercel-ip-country') ?? null,
   })
 
   // Keep the per-link counter on promo_links in sync (read-modify-write; fine at this scale).

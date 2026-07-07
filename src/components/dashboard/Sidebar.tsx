@@ -12,6 +12,7 @@ import {
   Settings,
   Music2,
   Radio,
+  BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/artist-page', label: 'Artist Page', icon: User },
   { href: '/dashboard/links', label: 'My FlyLinks', icon: Link2 },
+  { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/pre-save', label: 'Pre-save', icon: Calendar },
   { href: '/dashboard/subscribers', label: 'Subscribers', icon: Users },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
