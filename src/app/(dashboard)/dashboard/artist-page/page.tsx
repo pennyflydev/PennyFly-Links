@@ -46,6 +46,9 @@ export default function ArtistPageEditor() {
   const [hideBranding, setHideBranding] = useState(false)
   const [shopifyDomain, setShopifyDomain] = useState('')
   const [shopifyToken, setShopifyToken] = useState('')
+  const [importUrl, setImportUrl] = useState('')
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -84,6 +87,27 @@ export default function ArtistPageEditor() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  async function importFromSpotify() {
+    if (!importUrl.trim()) return
+    setImporting(true)
+    setImportMsg('')
+    try {
+      const res = await fetch(`/api/import/spotify?url=${encodeURIComponent(importUrl)}`)
+      const data = await res.json()
+      if (res.ok) {
+        if (data.name) setArtistName(data.name)
+        if (data.image) setAvatarUrl(data.image)
+        const n = data.releases?.length ?? 0
+        setImportMsg(`Imported ${data.name}${n ? ` · ${n} releases found` : ''}. Review and hit Save.`)
+      } else {
+        setImportMsg(data.error ?? 'Could not import')
+      }
+    } catch {
+      setImportMsg('Could not import')
+    }
+    setImporting(false)
+  }
 
   async function uploadImage(kind: 'avatar' | 'cover', file: File) {
     setUploading(kind)
@@ -210,6 +234,21 @@ export default function ArtistPageEditor() {
           </div>
         ) : (
           <div className="p-4 space-y-3">
+            {/* Import from Spotify */}
+            <div className="bg-yellow-400/5 border border-yellow-400/20 rounded-xl p-4">
+              <p className="text-sm font-medium text-white mb-1">Import from Spotify</p>
+              <p className="text-xs text-zinc-500 mb-3">Paste your Spotify artist link to auto-fill your name &amp; photo.</p>
+              <div className="flex gap-2">
+                <input value={importUrl} onChange={(e) => setImportUrl(e.target.value)} placeholder="open.spotify.com/artist/…"
+                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                <button onClick={importFromSpotify} disabled={importing || !importUrl.trim()}
+                  className="px-3 py-2 bg-yellow-400 text-black rounded-lg text-xs font-semibold hover:bg-yellow-300 disabled:opacity-50 transition-colors flex items-center gap-1.5">
+                  {importing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Import
+                </button>
+              </div>
+              {importMsg && <p className="text-xs text-yellow-400/90 mt-2">{importMsg}</p>}
+            </div>
+
             {/* Images */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
               <div>

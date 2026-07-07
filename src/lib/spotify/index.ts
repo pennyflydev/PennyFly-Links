@@ -17,6 +17,56 @@ function basicAuth() {
   return Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')
 }
 
+// App-only token (client credentials) for reading public catalog data.
+export async function getAppToken(): Promise<string | null> {
+  if (!process.env.SPOTIFY_CLIENT_ID) return null
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: `Basic ${basicAuth()}` },
+    body: new URLSearchParams({ grant_type: 'client_credentials' }),
+    next: { revalidate: 1800 },
+  })
+  if (!res.ok) return null
+  const data = (await res.json()) as { access_token?: string }
+  return data.access_token ?? null
+}
+
+export function parseSpotifyArtistId(url: string): string | null {
+  const m = url.match(/(?:open\.spotify\.com\/(?:intl-[a-z]+\/)?artist\/|spotify:artist:)([a-zA-Z0-9]+)/)
+  return m ? m[1] : null
+}
+
+// Public artist profile (name, image, genres) + latest releases.
+export async function fetchArtistProfile(artistId: string) {
+  const token = await getAppToken()
+  if (!token) return null
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const [artistRes, albumsRes] = await Promise.all([
+    fetch(`${API}/artists/${artistId}`, { headers }),
+    fetch(`${API}/artists/${artistId}/albums?include_groups=album,single&market=US&limit=8`, { headers }),
+  ])
+  if (!artistRes.ok) return null
+
+  const a = (await artistRes.json()) as { name: string; images?: { url: string }[]; genres?: string[] }
+  const albums = albumsRes.ok
+    ? ((await albumsRes.json()) as { items?: { name: string; images?: { url: string }[]; external_urls?: { spotify?: string } }[] }).items ?? []
+    : []
+
+  // De-dupe releases by name (albums endpoint repeats across markets).
+  const seen = new Set<string>()
+  const releases = albums
+    .filter((r) => (seen.has(r.name) ? false : seen.add(r.name)))
+    .map((r) => ({ title: r.name, coverUrl: r.images?.[0]?.url ?? null, spotifyUrl: r.external_urls?.spotify ?? null }))
+
+  return {
+    name: a.name,
+    image: a.images?.[0]?.url ?? null,
+    genres: (a.genres ?? []).slice(0, 5),
+    releases,
+  }
+}
+
 export function getAuthorizeUrl(state: string) {
   const params = new URLSearchParams({
     client_id: clientId(),
