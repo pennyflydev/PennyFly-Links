@@ -12,3 +12,4 @@ create table if not exists playlist_spotlights (
 );
 
 alter table playlist_spotlights enable row level security;
+create policy "Anyone can read playlist spotlights" on playlist_spotlights for select using (true);
