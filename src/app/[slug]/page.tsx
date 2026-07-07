@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist } from '@/lib/supabase/queries'
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
+import { toMediaEmbed } from '@/lib/utils'
 import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
 import PixelScripts from '@/components/PixelScripts'
@@ -162,6 +163,29 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
                 <ExternalLink className="w-4 h-4 text-white/40" />
               </a>
             ))}
+          </div>
+        )}
+
+        {/* Media players */}
+        {artist.media_embeds?.length > 0 && (
+          <div className="w-full space-y-3">
+            {([...(artist.media_embeds as { id: string; url: string; sort_order: number }[])]
+              .sort((a, b) => a.sort_order - b.sort_order))
+              .map((m) => {
+                const em = toMediaEmbed(m.url)
+                if (!em) return null
+                return (
+                  <div key={m.id} className="w-full overflow-hidden rounded-2xl">
+                    {em.aspect ? (
+                      <div className="relative w-full" style={{ aspectRatio: '16 / 9' }}>
+                        <iframe src={em.src} className="absolute inset-0 w-full h-full" style={{ border: 0 }} loading="lazy" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowFullScreen />
+                      </div>
+                    ) : (
+                      <iframe src={em.src} width="100%" height={em.height} style={{ border: 0 }} loading="lazy" allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture" />
+                    )}
+                  </div>
+                )
+              })}
           </div>
         )}
 

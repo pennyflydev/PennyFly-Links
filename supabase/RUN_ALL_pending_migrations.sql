@@ -114,6 +114,18 @@ alter table referrals enable row level security;
 alter table promo_links add column if not exists publish_at timestamptz;
 alter table promo_links add column if not exists expires_at timestamptz;
 
+-- ── 0012 · Media embeds ─────────────────────────────────────────────────
+create table if not exists media_embeds (
+  id         uuid primary key default gen_random_uuid(),
+  artist_id  uuid not null references artists(id) on delete cascade,
+  url        text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table media_embeds enable row level security;
+drop policy if exists "Anyone can read media embeds" on media_embeds;
+create policy "Anyone can read media embeds" on media_embeds for select using (true);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

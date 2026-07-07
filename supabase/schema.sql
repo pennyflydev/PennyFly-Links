@@ -425,6 +425,27 @@ create policy "Artist can manage own playlist spotlights" on playlist_spotlights
 );
 
 -- ─────────────────────────────────────────────
+-- MEDIA EMBEDS
+-- Live Spotify/YouTube/Apple/SoundCloud players on the artist page
+-- ─────────────────────────────────────────────
+create table media_embeds (
+  id         uuid primary key default uuid_generate_v4(),
+  artist_id  uuid not null references artists(id) on delete cascade,
+  url        text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table media_embeds enable row level security;
+create policy "Anyone can read media embeds" on media_embeds for select using (true);
+create policy "Artist can manage own media embeds" on media_embeds for all using (
+  artist_id in (
+    select a.id from artists a
+    join profiles p on p.id = a.profile_id
+    where p.clerk_id = auth.uid()::text
+  )
+);
+
+-- ─────────────────────────────────────────────
 -- SPOTIFY PRE-SAVE AUTHORIZATIONS
 -- A fan's stored Spotify auth so the release-day job can save the drop
 -- ─────────────────────────────────────────────

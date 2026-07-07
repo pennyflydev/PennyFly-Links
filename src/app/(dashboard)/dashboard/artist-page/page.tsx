@@ -38,6 +38,7 @@ export default function ArtistPageEditor() {
   const [socialLinks, setSocialLinks] = useState<{ platform: string; url: string }[]>([])
   const [customLinks, setCustomLinks] = useState<{ label: string; url: string }[]>([])
   const [playlists, setPlaylists] = useState<{ title: string; spotify_url: string }[]>([])
+  const [mediaEmbeds, setMediaEmbeds] = useState<{ url: string }[]>([])
 
   useEffect(() => {
     Promise.all([
@@ -46,8 +47,9 @@ export default function ArtistPageEditor() {
       fetch('/api/social-links').then((r) => r.json()),
       fetch('/api/custom-links').then((r) => r.json()),
       fetch('/api/playlists').then((r) => r.json()),
+      fetch('/api/media-embeds').then((r) => r.json()),
     ])
-      .then(([{ artist }, { sections }, social, custom, playlistData]) => {
+      .then(([{ artist }, { sections }, social, custom, playlistData, mediaData]) => {
         if (artist) {
           setArtistName(artist.artist_name ?? '')
           setBio(artist.bio ?? '')
@@ -64,6 +66,7 @@ export default function ArtistPageEditor() {
         setSocialLinks(social.links ?? [])
         setCustomLinks(custom.links ?? [])
         setPlaylists(playlistData.playlists ?? [])
+        setMediaEmbeds(mediaData.embeds ?? [])
       })
       .finally(() => setLoading(false))
   }, [])
@@ -108,7 +111,7 @@ export default function ArtistPageEditor() {
     setError('')
     setSaved(false)
     try {
-      const [a, s, soc, cust, pl] = await Promise.all([
+      const [a, s, soc, cust, pl, me] = await Promise.all([
         fetch('/api/artist', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -138,8 +141,13 @@ export default function ArtistPageEditor() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playlists }),
         }),
+        fetch('/api/media-embeds', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ embeds: mediaEmbeds }),
+        }),
       ])
-      if (a.ok && s.ok && soc.ok && cust.ok && pl.ok) {
+      if (a.ok && s.ok && soc.ok && cust.ok && pl.ok && me.ok) {
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)
       } else {
@@ -418,6 +426,28 @@ export default function ArtistPageEditor() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Media players */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Media Players</span>
+                <button onClick={() => setMediaEmbeds([...mediaEmbeds, { url: '' }])} className="text-xs text-yellow-400 hover:text-yellow-300 font-medium">+ Add</button>
+              </div>
+              {mediaEmbeds.length > 0 && (
+                <div className="border-t border-zinc-800 p-3 space-y-2">
+                  {mediaEmbeds.map((m, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input value={m.url} onChange={(e) => setMediaEmbeds(mediaEmbeds.map((x, j) => (j === i ? { url: e.target.value } : x)))} placeholder="Spotify / YouTube / Apple / SoundCloud link"
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                      <button onClick={() => setMediaEmbeds(mediaEmbeds.filter((_, j) => j !== i))} className="text-zinc-600 hover:text-red-400"><X className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="border-t border-zinc-800 px-4 py-2">
+                <p className="text-xs text-zinc-600">Paste a track, album, playlist, or video link — it embeds a live player.</p>
+              </div>
             </div>
           </div>
         )}
