@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, ExternalLink, Eye, MousePointerClick, Copy, Trash2, Check, Loader2, Code2 } from 'lucide-react'
+import { Plus, Search, ExternalLink, Eye, MousePointerClick, Copy, Trash2, Check, Loader2, Code2, Activity, AlertTriangle } from 'lucide-react'
 import QrButton from '@/components/QrButton'
 import UtmButton from '@/components/UtmButton'
 
@@ -41,6 +41,25 @@ export default function LinksListClient({
   const [busy, setBusy] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [embedCopied, setEmbedCopied] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [broken, setBroken] = useState<Record<string, string[]>>({})
+  const [healthMsg, setHealthMsg] = useState('')
+
+  async function checkHealth() {
+    setChecking(true)
+    setHealthMsg('')
+    try {
+      const res = await fetch('/api/links/health')
+      const data = await res.json()
+      const map: Record<string, string[]> = {}
+      for (const issue of data.issues ?? []) map[issue.id] = issue.broken
+      setBroken(map)
+      setHealthMsg(Object.keys(map).length === 0 ? 'All links are healthy ✓' : `${Object.keys(map).length} link(s) have broken URLs`)
+    } catch {
+      setHealthMsg('Could not check links')
+    }
+    setChecking(false)
+  }
 
   const filtered = links.filter((l) => l.title.toLowerCase().includes(query.toLowerCase()))
 
@@ -108,6 +127,12 @@ export default function LinksListClient({
             className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
           />
         </div>
+        <button onClick={checkHealth} disabled={checking}
+          className="flex items-center gap-2 px-3 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 disabled:opacity-50 transition-colors">
+          {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
+          Check links
+        </button>
+        {healthMsg && <span className="text-xs text-zinc-400">{healthMsg}</span>}
       </div>
 
       <div className="space-y-3">
@@ -122,6 +147,11 @@ export default function LinksListClient({
                 {(() => { const s = statusOf(link); return (
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.cls}`}>{s.label}</span>
                 ) })()}
+                {broken[link.id]?.length > 0 && (
+                  <span title={`Broken: ${broken[link.id].join(', ')}`} className="text-xs px-2 py-0.5 rounded-full font-medium bg-red-500/20 text-red-400 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />{broken[link.id].length} broken
+                  </span>
+                )}
               </div>
               <p className="text-xs text-zinc-500">{link.artist_name} · {link.release_type} · {link.streaming_links?.length ?? 0} platforms</p>
             </div>
