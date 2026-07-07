@@ -138,6 +138,23 @@ alter table analytics_events add column if not exists device text;
 alter table artists add column if not exists font         text not null default 'sans';
 alter table artists add column if not exists button_style text not null default 'rounded';
 
+-- ── 0016 · Digital product store ────────────────────────────────────────
+create table if not exists products (
+  id           uuid primary key default gen_random_uuid(),
+  artist_id    uuid not null references artists(id) on delete cascade,
+  title        text not null,
+  description  text default '',
+  price_cents  integer not null default 0,
+  cover_url    text,
+  buy_url      text,
+  is_published boolean not null default false,
+  sort_order   integer not null default 0,
+  created_at   timestamptz not null default now()
+);
+alter table products enable row level security;
+drop policy if exists "Anyone can read published products" on products;
+create policy "Anyone can read published products" on products for select using (is_published = true);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

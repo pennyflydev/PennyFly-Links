@@ -16,6 +16,7 @@ import {
   MessageSquare,
   CalendarDays,
   Gift,
+  ShoppingBag,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -26,6 +27,7 @@ const navItems = [
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/pre-save', label: 'Pre-save', icon: Calendar },
   { href: '/dashboard/events', label: 'Events', icon: CalendarDays },
+  { href: '/dashboard/store', label: 'Store', icon: ShoppingBag },
   { href: '/dashboard/subscribers', label: 'Subscribers', icon: Users },
   { href: '/dashboard/fan-wall', label: 'Fan Wall', icon: MessageSquare },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },

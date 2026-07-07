@@ -357,6 +357,32 @@ create table referrals (
 alter table referrals enable row level security;
 
 -- ─────────────────────────────────────────────
+-- PRODUCTS
+-- Digital product store — beats, stems, merch, downloads
+-- ─────────────────────────────────────────────
+create table products (
+  id           uuid primary key default uuid_generate_v4(),
+  artist_id    uuid not null references artists(id) on delete cascade,
+  title        text not null,
+  description  text default '',
+  price_cents  integer not null default 0,
+  cover_url    text,
+  buy_url      text,
+  is_published boolean not null default false,
+  sort_order   integer not null default 0,
+  created_at   timestamptz not null default now()
+);
+alter table products enable row level security;
+create policy "Anyone can read published products" on products for select using (is_published = true);
+create policy "Artist can manage own products" on products for all using (
+  artist_id in (
+    select a.id from artists a
+    join profiles p on p.id = a.profile_id
+    where p.clerk_id = auth.uid()::text
+  )
+);
+
+-- ─────────────────────────────────────────────
 -- EVENTS
 -- Gig / launch landing pages with countdown + ticket link
 -- ─────────────────────────────────────────────

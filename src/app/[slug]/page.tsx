@@ -163,6 +163,36 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           </div>
         )}
 
+        {/* Store */}
+        {artist.products?.length > 0 && (
+          <div className="w-full space-y-2">
+            <p className="text-xs font-medium text-white/50 uppercase tracking-wider px-1">Store</p>
+            {([...(artist.products as { id: string; title: string; price_cents: number; cover_url?: string; buy_url?: string; sort_order: number }[])]
+              .sort((a, b) => a.sort_order - b.sort_order))
+              .map((pr) => (
+                <div key={pr.id} className={`flex items-center gap-3 w-full bg-white/10 border border-white/20 ${radiusClass} p-3`}>
+                  {pr.cover_url ? (
+                    <img src={pr.cover_url} alt={pr.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                      <Music2 className="w-5 h-5 text-white/40" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{pr.title}</p>
+                    <p className="text-xs text-white/60">{pr.price_cents > 0 ? `$${(pr.price_cents / 100).toFixed(2)}` : 'Free'}</p>
+                  </div>
+                  {pr.buy_url && (
+                    <a href={pr.buy_url} target="_blank" rel="noopener noreferrer"
+                      className="px-4 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors shrink-0">
+                      Buy
+                    </a>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+
         {/* Custom links */}
         {sectionVisible('custom_links') && artist.custom_links?.length > 0 && (
           <div className="w-full space-y-2">
