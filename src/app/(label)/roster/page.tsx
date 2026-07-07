@@ -6,6 +6,7 @@ import RosterInvite, { type Invite } from './RosterInvite'
 import ActAsButton from './ActAsButton'
 import RoleControl from './RoleControl'
 import LabelSettings from './LabelSettings'
+import LabelActions from './LabelActions'
 
 type RosterArtist = {
   id: string
@@ -82,6 +83,7 @@ export default async function RosterPage() {
             {isAdmin ? 'Every artist on the platform. Act as anyone to help them.' : 'Your roster. One dashboard.'}
           </p>
         </div>
+        {label && <LabelActions />}
       </div>
 
       {label && (
