@@ -49,6 +49,8 @@ export default function ArtistPageEditor() {
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
+  const [ltUrl, setLtUrl] = useState('')
+  const [importingLt, setImportingLt] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -107,6 +109,20 @@ export default function ArtistPageEditor() {
       setImportMsg('Could not import')
     }
     setImporting(false)
+  }
+
+  async function importFromLinktree() {
+    if (!ltUrl.trim()) return
+    setImportingLt(true)
+    try {
+      const res = await fetch(`/api/import/linktree?url=${encodeURIComponent(ltUrl)}`)
+      const data = await res.json()
+      if (res.ok && data.links?.length) {
+        setCustomLinks((prev) => [...prev, ...data.links.map((l: { label: string; url: string }) => ({ label: l.label, url: l.url }))])
+        setLtUrl('')
+      }
+    } catch {}
+    setImportingLt(false)
   }
 
   async function uploadImage(kind: 'avatar' | 'cover', file: File) {
@@ -466,6 +482,14 @@ export default function ArtistPageEditor() {
                   className="text-xs text-yellow-400 hover:text-yellow-300 font-medium"
                 >
                   + Add
+                </button>
+              </div>
+              <div className="border-t border-zinc-800 p-3 flex gap-2">
+                <input value={ltUrl} onChange={(e) => setLtUrl(e.target.value)} placeholder="Import from linktr.ee/…"
+                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                <button onClick={importFromLinktree} disabled={importingLt || !ltUrl.trim()}
+                  className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 disabled:opacity-50 transition-colors flex items-center gap-1.5">
+                  {importingLt && <Loader2 className="w-3.5 h-3.5 animate-spin" />}Import
                 </button>
               </div>
               {customLinks.length > 0 && (
