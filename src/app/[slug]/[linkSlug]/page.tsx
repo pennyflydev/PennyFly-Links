@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { Music2 } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
-import { isLinkLive } from '@/lib/utils'
+import { isLinkLive, deviceFromUA } from '@/lib/utils'
 import StreamingButtons from '../StreamingButtons'
 import PixelScripts from '@/components/PixelScripts'
 
@@ -37,10 +37,10 @@ export async function generateMetadata({
 
 async function trackView(artistId: string, promoLinkId: string) {
   const supabase = createAdminClient()
-  const country = (await headers()).get('x-vercel-ip-country') ?? null
+  const h = await headers()
   supabase
     .from('analytics_events')
-    .insert({ artist_id: artistId, event_type: 'view', promo_link_id: promoLinkId, country })
+    .insert({ artist_id: artistId, event_type: 'view', promo_link_id: promoLinkId, country: h.get('x-vercel-ip-country') ?? null, device: deviceFromUA(h.get('user-agent')) })
     .then(async () => {
       const { data } = await supabase.from('promo_links').select('view_count').eq('id', promoLinkId).single()
       if (data) await supabase.from('promo_links').update({ view_count: (data.view_count ?? 0) + 1 }).eq('id', promoLinkId)

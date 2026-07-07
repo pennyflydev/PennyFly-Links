@@ -8,6 +8,7 @@ type Event = {
   platform: string | null
   promo_link_id: string | null
   country: string | null
+  device: string | null
   created_at: string
 }
 type LinkMeta = { id: string; title: string; slug: string; is_published: boolean }
@@ -97,6 +98,17 @@ export default function AnalyticsClient({
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8)
   }, [evts])
   const geoMax = Math.max(1, ...geoRows.map((r) => r[1]))
+
+  // Device split
+  const devices = useMemo(() => {
+    const c = { mobile: 0, desktop: 0, tablet: 0 }
+    for (const e of evts) {
+      const d = e.device === 'mobile' || e.device === 'tablet' ? e.device : 'desktop'
+      c[d]++
+    }
+    return c
+  }, [evts])
+  const deviceTotal = devices.mobile + devices.desktop + devices.tablet
 
   // Daily trend
   const buckets = useMemo(() => {
@@ -289,6 +301,31 @@ export default function AnalyticsClient({
           )}
         </div>
       </div>
+
+      {/* Devices */}
+      {deviceTotal > 0 && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
+          <h2 className="text-sm font-semibold text-white mb-4">Devices</h2>
+          <div className="grid grid-cols-3 gap-4">
+            {([
+              ['Mobile', devices.mobile],
+              ['Desktop', devices.desktop],
+              ['Tablet', devices.tablet],
+            ] as [string, number][]).map(([label, count]) => (
+              <div key={label}>
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-sm text-zinc-300">{label}</span>
+                  <span className="text-xs text-zinc-500 tabular-nums">{Math.round((count / deviceTotal) * 100)}%</span>
+                </div>
+                <p className="text-2xl font-bold text-white tabular-nums mb-1">{count.toLocaleString()}</p>
+                <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-yellow-400 rounded-full" style={{ width: `${(count / deviceTotal) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Pre-save conversion */}
       {presaves.length > 0 && (

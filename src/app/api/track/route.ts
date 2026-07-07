@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { deviceFromUA } from '@/lib/utils'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
     platform: platform ?? null,
     referrer: req.headers.get('referer') ?? null,
     country: req.headers.get('x-vercel-ip-country') ?? null,
+    device: deviceFromUA(req.headers.get('user-agent')),
   })
 
   // Keep the per-link counter on promo_links in sync (read-modify-write; fine at this scale).

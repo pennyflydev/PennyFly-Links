@@ -20,7 +20,7 @@ export default async function AnalyticsPage() {
   const [events, links, subscribers, presaves] = await Promise.all([
     supabase
       .from('analytics_events')
-      .select('event_type, platform, promo_link_id, country, created_at')
+      .select('event_type, platform, promo_link_id, country, device, created_at')
       .eq('artist_id', artist.id)
       .order('created_at', { ascending: false })
       .limit(10000),

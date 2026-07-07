@@ -259,6 +259,7 @@ create table analytics_events (
   platform      text,
   referrer      text,
   country       text,
+  device        text,
   created_at    timestamptz not null default now()
 );
 

@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist } from '@/lib/supabase/queries'
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
-import { toMediaEmbed } from '@/lib/utils'
+import { toMediaEmbed, deviceFromUA } from '@/lib/utils'
 import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
 import PixelScripts from '@/components/PixelScripts'
@@ -24,8 +24,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 async function trackView(artistId: string) {
   const supabase = createAdminClient()
-  const country = (await headers()).get('x-vercel-ip-country') ?? null
-  await supabase.from('analytics_events').insert({ artist_id: artistId, event_type: 'view', country })
+  const h = await headers()
+  await supabase.from('analytics_events').insert({
+    artist_id: artistId,
+    event_type: 'view',
+    country: h.get('x-vercel-ip-country') ?? null,
+    device: deviceFromUA(h.get('user-agent')),
+  })
 }
 
 export default async function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -131,6 +131,9 @@ alter table artists add column if not exists seo_title       text;
 alter table artists add column if not exists seo_description text;
 alter table artists add column if not exists hide_branding   boolean not null default false;
 
+-- ── 0014 · Device analytics ─────────────────────────────────────────────
+alter table analytics_events add column if not exists device text;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

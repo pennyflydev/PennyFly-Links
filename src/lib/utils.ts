@@ -24,6 +24,14 @@ export function absoluteUrl(path: string) {
   return `${process.env.NEXT_PUBLIC_APP_URL}${path}`
 }
 
+// Classify a visitor's device from the user-agent string.
+export function deviceFromUA(ua: string | null | undefined): 'mobile' | 'tablet' | 'desktop' {
+  if (!ua) return 'desktop'
+  if (/iPad|Tablet|PlayBook|Silk|Android(?!.*Mobile)/i.test(ua)) return 'tablet'
+  if (/Mobi|iPhone|iPod|Android.*Mobile|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return 'mobile'
+  return 'desktop'
+}
+
 // Convert a pasted media URL into an embeddable iframe source.
 // Supports Spotify, YouTube, Apple Music, SoundCloud. Returns null if unknown.
 export function toMediaEmbed(url: string): { src: string; height: number; aspect: boolean } | null {
