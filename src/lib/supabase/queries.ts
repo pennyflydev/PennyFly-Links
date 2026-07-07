@@ -105,7 +105,8 @@ export async function getArtistBySlug(slug: string) {
       social_links(*),
       custom_links(*),
       artist_page_sections(*),
-      playlist_spotlights(*)
+      playlist_spotlights(*),
+      fan_wall_notes(*)
     `)
     .eq('slug', slug)
     .single()

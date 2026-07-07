@@ -5,6 +5,7 @@ import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
 import StreamingButtons from './StreamingButtons'
+import FanWall from './FanWall'
 import PixelScripts from '@/components/PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -183,6 +184,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
               </a>
             ))}
           </div>
+        )}
+
+        {/* Fan Wall */}
+        {artist.fan_wall_enabled && (
+          <FanWall slug={artist.slug} notes={artist.fan_wall_notes ?? []} />
         )}
 
         {/* Footer */}

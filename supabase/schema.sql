@@ -62,6 +62,7 @@ create table artists (
   meta_pixel_id      text,
   tiktok_pixel_id    text,
   ga_measurement_id  text,
+  fan_wall_enabled   boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
@@ -326,6 +327,29 @@ create table custom_links (
 alter table custom_links enable row level security;
 create policy "Anyone can read custom links" on custom_links for select using (true);
 create policy "Artist can manage own custom links" on custom_links for all using (
+  artist_id in (
+    select a.id from artists a
+    join profiles p on p.id = a.profile_id
+    where p.clerk_id = auth.uid()::text
+  )
+);
+
+-- ─────────────────────────────────────────────
+-- FAN WALL NOTES
+-- Fans leave notes on the artist page; artist pins / removes
+-- ─────────────────────────────────────────────
+create table fan_wall_notes (
+  id          uuid primary key default uuid_generate_v4(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  name        text not null default '',
+  message     text not null,
+  is_pinned   boolean not null default false,
+  is_approved boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+alter table fan_wall_notes enable row level security;
+create policy "Anyone can read approved notes" on fan_wall_notes for select using (is_approved = true);
+create policy "Artist can manage own notes" on fan_wall_notes for all using (
   artist_id in (
     select a.id from artists a
     join profiles p on p.id = a.profile_id
