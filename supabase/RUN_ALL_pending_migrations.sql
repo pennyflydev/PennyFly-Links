@@ -110,7 +110,12 @@ create table if not exists referrals (
 );
 alter table referrals enable row level security;
 
+-- ── 0011 · Link scheduling ──────────────────────────────────────────────
+alter table promo_links add column if not exists publish_at timestamptz;
+alter table promo_links add column if not exists expires_at timestamptz;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
--- billing, Playlist Spotlight, Fan Wall, Events, Referrals) is now supported.
+-- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)
+-- is now supported.
 -- ════════════════════════════════════════════════════════════════════════
