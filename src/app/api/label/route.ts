@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
+import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
 
-async function ownerLabel() {
+async function labelCtx() {
   const profile = await getCurrentProfile()
   if (!profile || profile.role !== 'label') return null
-  return getLabelForProfile(profile.id)
+  return getLabelForUser(profile.id)
 }
 
 export async function GET() {
-  const label = await ownerLabel()
-  if (!label) return NextResponse.json({ error: 'Not a label' }, { status: 403 })
-  return NextResponse.json({ label })
+  const ctx = await labelCtx()
+  if (!ctx) return NextResponse.json({ error: 'Not a label' }, { status: 403 })
+  return NextResponse.json({ label: ctx.label })
 }
 
 export async function PATCH(req: NextRequest) {
-  const label = await ownerLabel()
-  if (!label) return NextResponse.json({ error: 'Not a label' }, { status: 403 })
+  const ctx = await labelCtx()
+  if (!ctx || (ctx.memberRole !== 'owner' && ctx.memberRole !== 'manager')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+  const label = ctx.label
 
   const body = await req.json()
   const allowed = ['name', 'logo_url', 'accent_color']

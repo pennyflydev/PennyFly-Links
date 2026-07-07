@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
+import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
 import { getWebPush } from '@/lib/push'
 
 // A label broadcasts a push to every fan across its whole roster.
@@ -10,8 +10,11 @@ export async function POST(req: NextRequest) {
 
   const profile = await getCurrentProfile()
   if (!profile || profile.role !== 'label') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  const label = await getLabelForProfile(profile.id)
-  if (!label) return NextResponse.json({ error: 'Label not found' }, { status: 404 })
+  const ctx = await getLabelForUser(profile.id)
+  if (!ctx || (ctx.memberRole !== 'owner' && ctx.memberRole !== 'manager')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+  const label = ctx.label
 
   const { body, url } = await req.json()
 

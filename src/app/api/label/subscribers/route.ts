@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
+import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
 
 // Every fan across the label's whole roster (for CSV export / data ownership).
 export async function GET() {
   const profile = await getCurrentProfile()
   if (!profile || profile.role !== 'label') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  const label = await getLabelForProfile(profile.id)
-  if (!label) return NextResponse.json({ error: 'Label not found' }, { status: 404 })
+  const ctx = await getLabelForUser(profile.id)
+  if (!ctx) return NextResponse.json({ error: 'Label not found' }, { status: 404 })
+  const label = ctx.label
 
   const supabase = createAdminClient()
   const { data: artists } = await supabase.from('artists').select('id, artist_name').eq('label_id', label.id)

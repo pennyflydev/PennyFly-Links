@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getArtistForCurrentUser, getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
+import { getArtistForCurrentUser, getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
 
 const BUCKET = 'media'
 const MAX_BYTES = 5 * 1024 * 1024 // 5MB
@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
   let prefix = artist?.id as string | undefined
   if (!prefix) {
     const profile = await getCurrentProfile()
-    const label = profile ? await getLabelForProfile(profile.id) : null
-    if (label) prefix = `label-${label.id}`
+    const ctx = profile ? await getLabelForUser(profile.id) : null
+    if (ctx) prefix = `label-${ctx.label.id}`
   }
   if (!prefix) return NextResponse.json({ error: 'Account not found' }, { status: 404 })
 

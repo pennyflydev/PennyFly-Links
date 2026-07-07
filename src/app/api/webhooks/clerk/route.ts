@@ -47,6 +47,34 @@ export async function POST(req: Request) {
     const displayName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0]
     const isAdmin = clerkId === process.env.ADMIN_CLERK_USER_ID
 
+    // Was this email invited to a label team? Then they join as a label member,
+    // not an artist (no artist page created).
+    const { data: memberInvite } = await supabase
+      .from('label_member_invites')
+      .select('id, label_id, member_role')
+      .eq('email', email.toLowerCase())
+      .is('claimed_by', null)
+      .gt('expires_at', new Date().toISOString())
+      .single()
+
+    if (memberInvite) {
+      const { data: memberProfile } = await supabase
+        .from('profiles')
+        .upsert({ clerk_id: clerkId, email, role: 'label', plan: 'label', onboarded: true }, { onConflict: 'clerk_id' })
+        .select()
+        .single()
+      if (memberProfile) {
+        await supabase.from('label_members').upsert(
+          { label_id: memberInvite.label_id, profile_id: memberProfile.id, member_role: memberInvite.member_role },
+          { onConflict: 'label_id,profile_id' }
+        )
+        await supabase.from('label_member_invites').update({ claimed_by: memberProfile.id }).eq('id', memberInvite.id)
+        // Remove any auto-created artist row so they're a pure team member.
+        await supabase.from('artists').delete().eq('profile_id', memberProfile.id)
+      }
+      return new Response('OK', { status: 200 })
+    }
+
     // Was this email invited by the label? If so, they become a signed artist
     // and join that label's roster.
     const { data: invite } = await supabase

@@ -29,6 +29,19 @@ export async function getLabelForProfile(profileId: string) {
   return data
 }
 
+// The label a profile owns OR is a team member of, plus their role.
+export async function getLabelForUser(profileId: string) {
+  const supabase = createAdminClient()
+  const owned = await supabase.from('labels').select('*').eq('owner_profile_id', profileId).single()
+  if (owned.data) return { label: owned.data, memberRole: 'owner' as const }
+
+  const mem = await supabase.from('label_members').select('member_role, labels(*)').eq('profile_id', profileId).single()
+  if (mem.data?.labels) {
+    return { label: mem.data.labels as unknown as { id: string; name: string; logo_url: string | null; accent_color: string | null }, memberRole: mem.data.member_role as string }
+  }
+  return null
+}
+
 // Can this profile view/manage the given artist? Admins can manage anyone;
 // a label can manage artists on its roster.
 export async function canManageArtist(
@@ -37,8 +50,8 @@ export async function canManageArtist(
 ): Promise<boolean> {
   if (profile.role === 'admin') return true
   if (profile.role === 'label' && artist.label_id) {
-    const label = await getLabelForProfile(profile.id)
-    return !!label && label.id === artist.label_id
+    const ctx = await getLabelForUser(profile.id)
+    return !!ctx && ctx.label.id === artist.label_id
   }
   return false
 }

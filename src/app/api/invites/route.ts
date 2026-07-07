@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
+import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -10,8 +10,9 @@ async function inviterContext() {
   if (!profile) return null
   if (profile.role === 'admin') return { profileId: profile.id, labelId: null as string | null }
   if (profile.role === 'label') {
-    const label = await getLabelForProfile(profile.id)
-    return { profileId: profile.id, labelId: label?.id ?? null }
+    const ctx = await getLabelForUser(profile.id)
+    if (!ctx || (ctx.memberRole !== 'owner' && ctx.memberRole !== 'manager')) return null
+    return { profileId: profile.id, labelId: ctx.label.id }
   }
   return null
 }

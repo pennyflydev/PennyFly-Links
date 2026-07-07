@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { Radio, Users, TrendingUp } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
+import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
 import RosterInvite, { type Invite } from './RosterInvite'
 import ActAsButton from './ActAsButton'
 import RoleControl from './RoleControl'
 import LabelSettings from './LabelSettings'
 import LabelActions from './LabelActions'
+import LabelTeam from './LabelTeam'
 
 type RosterArtist = {
   id: string
@@ -25,8 +26,10 @@ export default async function RosterPage() {
   const supabase = createAdminClient()
 
   // Label accounts are scoped to their own roster; admins see everything.
-  const label = profile && !isAdmin ? await getLabelForProfile(profile.id) : null
+  const labelCtx = profile && !isAdmin ? await getLabelForUser(profile.id) : null
+  const label = labelCtx?.label ?? null
   const labelId = label?.id ?? null
+  const canManage = labelCtx?.memberRole === 'owner' || labelCtx?.memberRole === 'manager'
 
   let artistsQuery = supabase
     .from('artists')
@@ -83,14 +86,16 @@ export default async function RosterPage() {
             {isAdmin ? 'Every artist on the platform. Act as anyone to help them.' : 'Your roster. One dashboard.'}
           </p>
         </div>
-        {label && <LabelActions />}
+        {label && canManage && <LabelActions />}
       </div>
 
-      {label && (
+      {label && canManage && (
         <LabelSettings initial={{ name: label.name ?? '', logo_url: label.logo_url ?? null, accent_color: label.accent_color ?? null }} />
       )}
 
-      <RosterInvite initialInvites={(invites ?? []) as Invite[]} />
+      {label && canManage && <LabelTeam />}
+
+      {(isAdmin || canManage) && <RosterInvite initialInvites={(invites ?? []) as Invite[]} />}
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {stats.map(({ label: l, value, icon: Icon }) => (
