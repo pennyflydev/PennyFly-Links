@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!artist) return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
 
   const body = await req.json()
-  const { title, artistName, subtitle, releaseType, slug, coverUrl, streamingLinks, publish } = body
+  const { title, artistName, subtitle, releaseType, slug, coverUrl, streamingLinks, publish, publishAt, expiresAt } = body
 
   if (!title) return NextResponse.json({ error: 'Title required' }, { status: 400 })
 
@@ -64,6 +64,8 @@ export async function POST(req: NextRequest) {
       release_type: releaseType ?? 'single',
       cover_url: coverUrl ?? null,
       is_published: publish ?? false,
+      publish_at: publishAt || null,
+      expires_at: expiresAt || null,
     })
     .select()
     .single()

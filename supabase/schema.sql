@@ -109,6 +109,8 @@ create table promo_links (
   release_type  text not null default 'single' check (release_type in ('single', 'album', 'ep')),
   cover_url     text,
   is_published  boolean not null default false,
+  publish_at    timestamptz,
+  expires_at    timestamptz,
   view_count    integer not null default 0,
   click_count   integer not null default 0,
   created_at    timestamptz not null default now(),

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Music2 } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
+import { isLinkLive } from '@/lib/utils'
 import StreamingButtons from '../../../[slug]/StreamingButtons'
 
 async function getRelease(artistSlug: string, linkSlug: string) {
@@ -23,7 +24,7 @@ export default async function EmbedRelease({
 }) {
   const { slug, linkSlug } = await params
   const release = await getRelease(slug, linkSlug)
-  if (!release) notFound()
+  if (!release || !isLinkLive(release)) notFound()
 
   const artist = release.artists as { id: string; artist_name: string; slug: string }
 

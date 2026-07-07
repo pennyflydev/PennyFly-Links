@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { cookies } from 'next/headers'
 import { createClient } from './server'
 import { createAdminClient } from './server'
+import { isLinkLive } from '@/lib/utils'
 
 export const IMPERSONATE_COOKIE = 'impersonate_artist_id'
 
@@ -129,7 +130,8 @@ export async function getPublishedLinksForArtist(artistId: string) {
     .eq('is_published', true)
     .order('created_at', { ascending: false })
 
-  return data ?? []
+  // Respect the schedule window (publish_at / expires_at).
+  return (data ?? []).filter((l) => isLinkLive(l))
 }
 
 export async function getActivePresavesForArtist(artistId: string) {

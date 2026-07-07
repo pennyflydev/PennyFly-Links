@@ -12,10 +12,20 @@ export type PromoLink = {
   artist_name: string
   release_type: string
   is_published: boolean
+  publish_at?: string | null
+  expires_at?: string | null
   view_count: number
   click_count: number
   cover_url?: string | null
   streaming_links: { platform: string }[]
+}
+
+function statusOf(l: PromoLink) {
+  if (!l.is_published) return { label: 'Draft', cls: 'bg-zinc-700 text-zinc-400' }
+  const now = Date.now()
+  if (l.publish_at && new Date(l.publish_at).getTime() > now) return { label: 'Scheduled', cls: 'bg-sky-500/20 text-sky-400' }
+  if (l.expires_at && new Date(l.expires_at).getTime() <= now) return { label: 'Expired', cls: 'bg-zinc-700 text-zinc-500' }
+  return { label: 'Live', cls: 'bg-green-500/20 text-green-400' }
 }
 
 export default function LinksListClient({
@@ -108,9 +118,9 @@ export default function LinksListClient({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <p className="font-semibold text-white truncate">{link.title}</p>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${link.is_published ? 'bg-green-500/20 text-green-400' : 'bg-zinc-700 text-zinc-400'}`}>
-                  {link.is_published ? 'Live' : 'Draft'}
-                </span>
+                {(() => { const s = statusOf(link); return (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.cls}`}>{s.label}</span>
+                ) })()}
               </div>
               <p className="text-xs text-zinc-500">{link.artist_name} · {link.release_type} · {link.streaming_links?.length ?? 0} platforms</p>
             </div>

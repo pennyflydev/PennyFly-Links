@@ -13,6 +13,12 @@ const PLATFORM_LABELS: Record<string, string> = {
   bandcamp: 'Bandcamp', soundcloud: 'SoundCloud',
 }
 
+function toLocalInput(iso: string) {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 export default function EditLinkPage() {
   const router = useRouter()
   const params = useParams()
@@ -30,6 +36,8 @@ export default function EditLinkPage() {
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [isPublished, setIsPublished] = useState(false)
+  const [publishAt, setPublishAt] = useState('')
+  const [expiresAt, setExpiresAt] = useState('')
   const [streamingLinks, setStreamingLinks] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -43,6 +51,8 @@ export default function EditLinkPage() {
           setReleaseType(link.release_type ?? 'single')
           setCoverUrl(link.cover_url ?? null)
           setIsPublished(link.is_published ?? false)
+          setPublishAt(link.publish_at ? toLocalInput(link.publish_at) : '')
+          setExpiresAt(link.expires_at ? toLocalInput(link.expires_at) : '')
           const map: Record<string, string> = {}
           for (const sl of link.streaming_links ?? []) map[sl.platform] = sl.url
           setStreamingLinks(map)
@@ -84,6 +94,8 @@ export default function EditLinkPage() {
           release_type: releaseType,
           cover_url: coverUrl,
           is_published: isPublished,
+          publish_at: publishAt ? new Date(publishAt).toISOString() : null,
+          expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
           streamingLinks: Object.entries(streamingLinks).map(([platform, url]) => ({ platform, url })),
         }),
       })
@@ -186,6 +198,23 @@ export default function EditLinkPage() {
               className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${isPublished ? 'bg-yellow-400 justify-end' : 'bg-zinc-700 justify-start'}`}>
               <span className="w-5 h-5 bg-white rounded-full shadow" />
             </button>
+          </div>
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-medium text-white">Schedule <span className="text-xs text-zinc-500 font-normal">(optional)</span></p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Go live at</label>
+                <input type="datetime-local" value={publishAt} onChange={(e) => setPublishAt(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1.5">Expire at</label>
+                <input type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500" />
+              </div>
+            </div>
+            <p className="text-xs text-zinc-500">Published links only appear inside this window. Leave blank to stay live.</p>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">

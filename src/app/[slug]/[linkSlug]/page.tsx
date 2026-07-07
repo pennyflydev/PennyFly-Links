@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { Music2 } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
+import { isLinkLive } from '@/lib/utils'
 import StreamingButtons from '../StreamingButtons'
 import PixelScripts from '@/components/PixelScripts'
 
@@ -53,7 +54,7 @@ export default async function ReleasePage({
 }) {
   const { slug, linkSlug } = await params
   const release = await getRelease(slug, linkSlug)
-  if (!release) notFound()
+  if (!release || !isLinkLive(release)) notFound()
 
   const artist = release.artists as {
     id: string; artist_name: string; slug: string; avatar_url: string | null
