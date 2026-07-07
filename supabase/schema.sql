@@ -67,6 +67,8 @@ create table artists (
   seo_title          text,
   seo_description    text,
   hide_branding      boolean not null default false,
+  font               text not null default 'sans',
+  button_style       text not null default 'rounded',
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );

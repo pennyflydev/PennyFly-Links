@@ -134,6 +134,10 @@ alter table artists add column if not exists hide_branding   boolean not null de
 -- ── 0014 · Device analytics ─────────────────────────────────────────────
 alter table analytics_events add column if not exists device text;
 
+-- ── 0015 · Appearance (font + button style) ─────────────────────────────
+alter table artists add column if not exists font         text not null default 'sans';
+alter table artists add column if not exists button_style text not null default 'rounded';
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

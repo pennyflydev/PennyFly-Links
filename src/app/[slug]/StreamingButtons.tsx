@@ -26,10 +26,12 @@ export default function StreamingButtons({
   artistId,
   promoLinkId,
   links,
+  radiusClass = 'rounded-xl',
 }: {
   artistId: string
   promoLinkId: string
   links: { platform: string; url: string }[]
+  radiusClass?: string
 }) {
   function trackClick(platform: string) {
     // keepalive lets the request finish even as the browser opens the link
@@ -55,7 +57,7 @@ export default function StreamingButtons({
             target={isSpotify ? undefined : '_blank'}
             rel="noopener noreferrer"
             onClick={() => trackClick(sl.platform)}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${PLATFORM_COLORS[sl.platform] ?? 'bg-zinc-700 hover:bg-zinc-600'}`}
+            className={`flex items-center justify-center gap-2 py-2.5 ${radiusClass} text-white text-sm font-semibold transition-colors ${PLATFORM_COLORS[sl.platform] ?? 'bg-zinc-700 hover:bg-zinc-600'}`}
           >
             {PLATFORM_LABELS[sl.platform] ?? sl.platform}
           </a>

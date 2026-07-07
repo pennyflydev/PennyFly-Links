@@ -24,6 +24,24 @@ export function absoluteUrl(path: string) {
   return `${process.env.NEXT_PUBLIC_APP_URL}${path}`
 }
 
+// Artist-page appearance: font-family + button radius.
+export const FONT_FAMILIES: Record<string, string | undefined> = {
+  sans: undefined, // inherit the app default (Inter)
+  serif: 'Georgia, Cambria, "Times New Roman", serif',
+  mono: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  rounded: 'ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", system-ui, sans-serif',
+}
+
+export function fontFamilyFor(font?: string | null): string | undefined {
+  return FONT_FAMILIES[font ?? 'sans']
+}
+
+export function buttonRadiusFor(style?: string | null): string {
+  if (style === 'pill') return 'rounded-full'
+  if (style === 'square') return 'rounded-md'
+  return 'rounded-xl'
+}
+
 // Classify a visitor's device from the user-agent string.
 export function deviceFromUA(ua: string | null | undefined): 'mobile' | 'tablet' | 'desktop' {
   if (!ua) return 'desktop'

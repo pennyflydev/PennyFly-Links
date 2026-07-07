@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist } from '@/lib/supabase/queries'
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
-import { toMediaEmbed, deviceFromUA } from '@/lib/utils'
+import { toMediaEmbed, deviceFromUA, fontFamilyFor, buttonRadiusFor } from '@/lib/utils'
 import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
 import PixelScripts from '@/components/PixelScripts'
@@ -58,12 +58,15 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
     ? { backgroundImage: artist.background_value }
     : {}
 
+  const pageStyle = { ...bg, fontFamily: fontFamilyFor(artist.font) }
+  const radiusClass = buttonRadiusFor(artist.button_style)
+
   const socialIcons: Record<string, React.ElementType> = {
     website: Globe,
   }
 
   return (
-    <div className="min-h-screen text-white flex flex-col items-center" style={bg}>
+    <div className="min-h-screen text-white flex flex-col items-center" style={pageStyle}>
       <PixelScripts
         metaPixelId={artist.meta_pixel_id}
         tiktokPixelId={artist.tiktok_pixel_id}
@@ -153,7 +156,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
                 </div>
                 {/* Streaming buttons */}
                 {link.streaming_links?.length > 0 && (
-                  <StreamingButtons artistId={artist.id} promoLinkId={link.id} links={link.streaming_links} />
+                  <StreamingButtons artistId={artist.id} promoLinkId={link.id} links={link.streaming_links} radiusClass={radiusClass} />
                 )}
               </div>
             ))}
@@ -165,7 +168,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           <div className="w-full space-y-2">
             {(artist.custom_links as { id: string; label: string; url: string }[]).map((cl) => (
               <a key={cl.id} href={cl.url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between w-full bg-white/10 border border-white/20 rounded-2xl px-5 py-3.5 hover:bg-white/15 transition-colors">
+                className={`flex items-center justify-between w-full bg-white/10 border border-white/20 ${radiusClass} px-5 py-3.5 hover:bg-white/15 transition-colors`}>
                 <span className="font-medium">{cl.label}</span>
                 <ExternalLink className="w-4 h-4 text-white/40" />
               </a>

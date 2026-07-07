@@ -30,6 +30,8 @@ export default function ArtistPageEditor() {
   const [bio, setBio] = useState('')
   const [theme, setTheme] = useState('minimal')
   const [bgValue, setBgValue] = useState('#09090b')
+  const [font, setFont] = useState('sans')
+  const [buttonStyle, setButtonStyle] = useState('rounded')
   const [slug, setSlug] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
@@ -58,6 +60,8 @@ export default function ArtistPageEditor() {
           setBio(artist.bio ?? '')
           setTheme(artist.theme ?? 'minimal')
           setBgValue(artist.background_value || '#09090b')
+          setFont(artist.font ?? 'sans')
+          setButtonStyle(artist.button_style ?? 'rounded')
           setSlug(artist.slug ?? '')
           setAvatarUrl(artist.avatar_url ?? null)
           setCoverUrl(artist.cover_url ?? null)
@@ -126,6 +130,7 @@ export default function ArtistPageEditor() {
             background_type: bgValue.includes('gradient') ? 'gradient' : 'color',
             background_value: bgValue,
             seo_title: seoTitle, seo_description: seoDescription, hide_branding: hideBranding,
+            font, button_style: buttonStyle,
           }),
         }),
         fetch('/api/sections', {
@@ -336,6 +341,36 @@ export default function ArtistPageEditor() {
                       <button key={g} onClick={() => setBgValue(g)}
                         className={`h-8 rounded-md border transition-colors ${bgValue === g ? 'border-yellow-400' : 'border-white/10 hover:border-white/30'}`}
                         style={{ background: g }} />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-zinc-400">Font</span>
+                  <div className="grid grid-cols-4 gap-2 mt-1.5">
+                    {[
+                      { id: 'sans', label: 'Sans', ff: 'system-ui' },
+                      { id: 'serif', label: 'Serif', ff: 'Georgia, serif' },
+                      { id: 'mono', label: 'Mono', ff: 'ui-monospace, monospace' },
+                      { id: 'rounded', label: 'Round', ff: 'ui-rounded, system-ui' },
+                    ].map((f) => (
+                      <button key={f.id} onClick={() => setFont(f.id)}
+                        className={`py-1.5 rounded-md border text-xs transition-colors ${font === f.id ? 'border-yellow-400 text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'}`}
+                        style={{ fontFamily: f.ff }}>Aa</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-zinc-400">Button style</span>
+                  <div className="grid grid-cols-3 gap-2 mt-1.5">
+                    {[
+                      { id: 'rounded', label: 'Rounded', cls: 'rounded-lg' },
+                      { id: 'pill', label: 'Pill', cls: 'rounded-full' },
+                      { id: 'square', label: 'Square', cls: 'rounded-none' },
+                    ].map((b) => (
+                      <button key={b.id} onClick={() => setButtonStyle(b.id)}
+                        className={`py-1.5 border text-xs transition-colors ${b.cls} ${buttonStyle === b.id ? 'border-yellow-400 text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'}`}>
+                        {b.label}
+                      </button>
                     ))}
                   </div>
                 </div>
