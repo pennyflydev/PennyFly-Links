@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/dashboard/Sidebar'
 import ImpersonationBanner from '@/components/dashboard/ImpersonationBanner'
+import ReferralClaim from '@/components/dashboard/ReferralClaim'
 import { getCurrentProfile, getImpersonationContext } from '@/lib/supabase/queries'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -21,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
+      <ReferralClaim />
       <Sidebar isAdmin={isAdmin} isLabel={isLabel} />
       <div className="flex-1 flex flex-col overflow-hidden">
         {impersonation && <ImpersonationBanner artistName={impersonation.artistName} />}

@@ -19,6 +19,7 @@ create table profiles (
   stripe_subscription_id text,
   subscription_status   text,
   current_period_end    timestamptz,
+  referral_code         text unique,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
@@ -333,6 +334,19 @@ create policy "Artist can manage own custom links" on custom_links for all using
     where p.clerk_id = auth.uid()::text
   )
 );
+
+-- ─────────────────────────────────────────────
+-- REFERRALS
+-- ─────────────────────────────────────────────
+create table referrals (
+  id                  uuid primary key default uuid_generate_v4(),
+  referrer_profile_id uuid not null references profiles(id) on delete cascade,
+  referred_profile_id uuid unique references profiles(id) on delete cascade,
+  referred_email      text,
+  status              text not null default 'signed_up',
+  created_at          timestamptz not null default now()
+);
+alter table referrals enable row level security;
 
 -- ─────────────────────────────────────────────
 -- EVENTS

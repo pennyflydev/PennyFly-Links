@@ -15,6 +15,7 @@ import {
   BarChart3,
   MessageSquare,
   CalendarDays,
+  Gift,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -69,6 +70,18 @@ export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?
 
       {/* Footer */}
       <div className="px-4 py-4 border-t border-zinc-800 space-y-3">
+        <Link
+          href="/dashboard/refer"
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
+            pathname.startsWith('/dashboard/refer')
+              ? 'bg-zinc-800 text-white'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+          )}
+        >
+          <Gift className="w-4 h-4 shrink-0" />
+          Refer &amp; earn
+        </Link>
         {(isAdmin || isLabel) && (
           <Link
             href="/roster"
