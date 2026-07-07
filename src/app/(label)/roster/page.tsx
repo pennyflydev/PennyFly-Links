@@ -5,6 +5,7 @@ import { getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
 import RosterInvite, { type Invite } from './RosterInvite'
 import ActAsButton from './ActAsButton'
 import RoleControl from './RoleControl'
+import LabelSettings from './LabelSettings'
 
 type RosterArtist = {
   id: string
@@ -82,6 +83,10 @@ export default async function RosterPage() {
           </p>
         </div>
       </div>
+
+      {label && (
+        <LabelSettings initial={{ name: label.name ?? '', logo_url: label.logo_url ?? null, accent_color: label.accent_color ?? null }} />
+      )}
 
       <RosterInvite initialInvites={(invites ?? []) as Invite[]} />
 

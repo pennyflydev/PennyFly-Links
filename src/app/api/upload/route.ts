@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getArtistForCurrentUser } from '@/lib/supabase/queries'
+import { getArtistForCurrentUser, getCurrentProfile, getLabelForProfile } from '@/lib/supabase/queries'
 
 const BUCKET = 'media'
 const MAX_BYTES = 5 * 1024 * 1024 // 5MB
@@ -11,8 +11,15 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Artists upload under their id; label accounts under their label id.
   const artist = await getArtistForCurrentUser()
-  if (!artist) return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
+  let prefix = artist?.id as string | undefined
+  if (!prefix) {
+    const profile = await getCurrentProfile()
+    const label = profile ? await getLabelForProfile(profile.id) : null
+    if (label) prefix = `label-${label.id}`
+  }
+  if (!prefix) return NextResponse.json({ error: 'Account not found' }, { status: 404 })
 
   const form = await req.formData()
   const file = form.get('file') as File | null
@@ -32,7 +39,7 @@ export async function POST(req: NextRequest) {
   await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {})
 
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const path = `${artist.id}/${kind}-${Date.now()}.${ext}`
+  const path = `${prefix}/${kind}-${Date.now()}.${ext}`
   const bytes = new Uint8Array(await file.arrayBuffer())
 
   const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {

@@ -171,6 +171,10 @@ create table if not exists push_subscriptions (
 );
 alter table push_subscriptions enable row level security;
 
+-- ── 0019 · Label branding ───────────────────────────────────────────────
+alter table labels add column if not exists logo_url     text;
+alter table labels add column if not exists accent_color text;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

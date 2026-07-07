@@ -288,13 +288,22 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           <FanWall slug={artist.slug} notes={artist.fan_wall_notes ?? []} />
         )}
 
-        {/* Footer — white-label removes it on paid plans */}
-        {!(artist.hide_branding && ['pro', 'label', 'signed', 'enterprise'].includes(artist.profiles?.plan)) && (
+        {/* Footer — label branding, else FlyLink (hidden on white-label plans) */}
+        {artist.labels ? (
+          <div className="mt-4 flex items-center gap-1.5 text-white/40 text-xs">
+            {artist.labels.logo_url ? (
+              <img src={artist.labels.logo_url} alt={artist.labels.name} className="h-4 w-4 rounded object-cover" />
+            ) : (
+              <Music2 className="w-3 h-3" />
+            )}
+            <span>Powered by {artist.labels.name}</span>
+          </div>
+        ) : !(artist.hide_branding && ['pro', 'label', 'signed', 'enterprise'].includes(artist.profiles?.plan)) ? (
           <div className="mt-4 flex items-center gap-1.5 text-white/30 text-xs">
             <Music2 className="w-3 h-3" />
             <span>Powered by FlyLink</span>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

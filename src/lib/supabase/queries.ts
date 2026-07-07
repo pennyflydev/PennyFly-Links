@@ -110,6 +110,7 @@ export async function getArtistBySlug(slug: string) {
     .select(`
       *,
       profiles(plan),
+      labels(name, logo_url),
       social_links(*),
       custom_links(*),
       artist_page_sections(*),

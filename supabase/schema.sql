@@ -36,6 +36,8 @@ create table labels (
   id                uuid primary key default uuid_generate_v4(),
   owner_profile_id  uuid not null references profiles(id) on delete cascade,
   name              text not null default '',
+  logo_url          text,
+  accent_color      text,
   created_at        timestamptz not null default now()
 );
 alter table labels enable row level security;
