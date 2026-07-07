@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, ExternalLink, Eye, MousePointerClick, Copy, Trash2, Check, Loader2 } from 'lucide-react'
+import { Plus, Search, ExternalLink, Eye, MousePointerClick, Copy, Trash2, Check, Loader2, Code2 } from 'lucide-react'
 import QrButton from '@/components/QrButton'
 
 export type PromoLink = {
@@ -29,6 +29,7 @@ export default function LinksListClient({
   const [query, setQuery] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [embedCopied, setEmbedCopied] = useState<string | null>(null)
 
   const filtered = links.filter((l) => l.title.toLowerCase().includes(query.toLowerCase()))
 
@@ -58,6 +59,14 @@ export default function LinksListClient({
     navigator.clipboard.writeText(url)
     setCopied(link.id)
     setTimeout(() => setCopied(null), 2000)
+  }
+
+  function copyEmbed(link: PromoLink) {
+    const src = `${window.location.origin}/embed/${artistSlug}/${link.slug}`
+    const code = `<iframe src="${src}" width="400" height="480" style="border:0;border-radius:16px" loading="lazy"></iframe>`
+    navigator.clipboard.writeText(code)
+    setEmbedCopied(link.id)
+    setTimeout(() => setEmbedCopied(null), 2000)
   }
 
   if (links.length === 0) {
@@ -116,6 +125,9 @@ export default function LinksListClient({
                     {copied === link.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                   <QrButton url={`/${artistSlug}/${link.slug}`} filename={`flylink-${link.slug}`} />
+                  <button onClick={() => copyEmbed(link)} title="Copy embed code" className="p-1.5 text-zinc-500 hover:text-white transition-colors">
+                    {embedCopied === link.id ? <Check className="w-4 h-4 text-green-400" /> : <Code2 className="w-4 h-4" />}
+                  </button>
                   <a href={`/${artistSlug}/${link.slug}`} target="_blank" title="Open" className="p-1.5 text-zinc-500 hover:text-white transition-colors">
                     <ExternalLink className="w-4 h-4" />
                   </a>
