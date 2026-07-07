@@ -335,6 +335,34 @@ create policy "Artist can manage own custom links" on custom_links for all using
 );
 
 -- ─────────────────────────────────────────────
+-- EVENTS
+-- Gig / launch landing pages with countdown + ticket link
+-- ─────────────────────────────────────────────
+create table events (
+  id           uuid primary key default uuid_generate_v4(),
+  artist_id    uuid not null references artists(id) on delete cascade,
+  title        text not null,
+  slug         text not null unique,
+  description  text default '',
+  cover_url    text,
+  start_at     timestamptz not null,
+  venue        text default '',
+  city         text default '',
+  ticket_url   text,
+  is_published boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+alter table events enable row level security;
+create policy "Anyone can read published events" on events for select using (is_published = true);
+create policy "Artist can manage own events" on events for all using (
+  artist_id in (
+    select a.id from artists a
+    join profiles p on p.id = a.profile_id
+    where p.clerk_id = auth.uid()::text
+  )
+);
+
+-- ─────────────────────────────────────────────
 -- FAN WALL NOTES
 -- Fans leave notes on the artist page; artist pins / removes
 -- ─────────────────────────────────────────────
