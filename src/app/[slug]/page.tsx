@@ -164,6 +164,27 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           </div>
         )}
 
+        {/* Playlist Spotlight */}
+        {artist.playlist_spotlights?.length > 0 && (
+          <div className="w-full space-y-2">
+            <p className="text-xs font-medium text-white/50 uppercase tracking-wider px-1">Playlists</p>
+            {(artist.playlist_spotlights as { id: string; title: string; spotify_url: string; cover_url?: string }[]).map((pl) => (
+              <a key={pl.id} href={pl.spotify_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 hover:bg-white/15 transition-colors">
+                {pl.cover_url ? (
+                  <img src={pl.cover_url} alt={pl.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-[#1DB954]/20 flex items-center justify-center shrink-0">
+                    <Music2 className="w-5 h-5 text-[#1DB954]" />
+                  </div>
+                )}
+                <span className="font-medium flex-1 truncate">{pl.title}</span>
+                <ExternalLink className="w-4 h-4 text-white/40" />
+              </a>
+            ))}
+          </div>
+        )}
+
         {/* Footer */}
         <div className="mt-4 flex items-center gap-1.5 text-white/30 text-xs">
           <Music2 className="w-3 h-3" />

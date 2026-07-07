@@ -36,6 +36,7 @@ export default function ArtistPageEditor() {
   const [sections, setSections] = useState<Section[]>([])
   const [socialLinks, setSocialLinks] = useState<{ platform: string; url: string }[]>([])
   const [customLinks, setCustomLinks] = useState<{ label: string; url: string }[]>([])
+  const [playlists, setPlaylists] = useState<{ title: string; spotify_url: string }[]>([])
 
   useEffect(() => {
     Promise.all([
@@ -43,8 +44,9 @@ export default function ArtistPageEditor() {
       fetch('/api/sections').then((r) => r.json()),
       fetch('/api/social-links').then((r) => r.json()),
       fetch('/api/custom-links').then((r) => r.json()),
+      fetch('/api/playlists').then((r) => r.json()),
     ])
-      .then(([{ artist }, { sections }, social, custom]) => {
+      .then(([{ artist }, { sections }, social, custom, playlistData]) => {
         if (artist) {
           setArtistName(artist.artist_name ?? '')
           setBio(artist.bio ?? '')
@@ -59,6 +61,7 @@ export default function ArtistPageEditor() {
         setSections([...loaded].sort((a, b) => a.sort_order - b.sort_order))
         setSocialLinks(social.links ?? [])
         setCustomLinks(custom.links ?? [])
+        setPlaylists(playlistData.playlists ?? [])
       })
       .finally(() => setLoading(false))
   }, [])
@@ -103,7 +106,7 @@ export default function ArtistPageEditor() {
     setError('')
     setSaved(false)
     try {
-      const [a, s, soc, cust] = await Promise.all([
+      const [a, s, soc, cust, pl] = await Promise.all([
         fetch('/api/artist', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -124,8 +127,13 @@ export default function ArtistPageEditor() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ links: customLinks }),
         }),
+        fetch('/api/playlists', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playlists }),
+        }),
       ])
-      if (a.ok && s.ok && soc.ok && cust.ok) {
+      if (a.ok && s.ok && soc.ok && cust.ok && pl.ok) {
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)
       } else {
@@ -354,6 +362,27 @@ export default function ArtistPageEditor() {
                       <button onClick={() => setCustomLinks(customLinks.filter((_, j) => j !== i))} className="text-zinc-600 hover:text-red-400">
                         <X className="w-4 h-4" />
                       </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Playlist Spotlight */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-white">Playlist Spotlight</span>
+                <button onClick={() => setPlaylists([...playlists, { title: '', spotify_url: '' }])} className="text-xs text-yellow-400 hover:text-yellow-300 font-medium">+ Add</button>
+              </div>
+              {playlists.length > 0 && (
+                <div className="border-t border-zinc-800 p-3 space-y-2">
+                  {playlists.map((p, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input value={p.title} onChange={(e) => setPlaylists(playlists.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} placeholder="Playlist name"
+                        className="w-28 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                      <input value={p.spotify_url} onChange={(e) => setPlaylists(playlists.map((x, j) => (j === i ? { ...x, spotify_url: e.target.value } : x)))} placeholder="open.spotify.com/playlist/…"
+                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                      <button onClick={() => setPlaylists(playlists.filter((_, j) => j !== i))} className="text-zinc-600 hover:text-red-400"><X className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>

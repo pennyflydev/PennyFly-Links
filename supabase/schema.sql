@@ -334,6 +334,29 @@ create policy "Artist can manage own custom links" on custom_links for all using
 );
 
 -- ─────────────────────────────────────────────
+-- PLAYLIST SPOTLIGHTS
+-- Curated Spotify playlist deep-links on the artist page
+-- ─────────────────────────────────────────────
+create table playlist_spotlights (
+  id          uuid primary key default uuid_generate_v4(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  title       text not null default '',
+  spotify_url text not null,
+  cover_url   text,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+alter table playlist_spotlights enable row level security;
+create policy "Anyone can read playlist spotlights" on playlist_spotlights for select using (true);
+create policy "Artist can manage own playlist spotlights" on playlist_spotlights for all using (
+  artist_id in (
+    select a.id from artists a
+    join profiles p on p.id = a.profile_id
+    where p.clerk_id = auth.uid()::text
+  )
+);
+
+-- ─────────────────────────────────────────────
 -- SPOTIFY PRE-SAVE AUTHORIZATIONS
 -- A fan's stored Spotify auth so the release-day job can save the drop
 -- ─────────────────────────────────────────────
