@@ -13,10 +13,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const artist = await getArtistBySlug(slug)
   if (!artist) return { title: 'Not Found' }
+  const title = artist.seo_title?.trim() || `${artist.artist_name} | FlyLink`
+  const description = artist.seo_description?.trim() || artist.bio || `Listen to ${artist.artist_name} on all platforms.`
   return {
-    title: `${artist.artist_name} | FlyLink`,
-    description: artist.bio || `Listen to ${artist.artist_name} on all platforms.`,
-    openGraph: { images: artist.avatar_url ? [artist.avatar_url] : [] },
+    title,
+    description,
+    openGraph: { title, description, images: artist.avatar_url ? [artist.avatar_url] : [] },
   }
 }
 
@@ -215,11 +217,13 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           <FanWall slug={artist.slug} notes={artist.fan_wall_notes ?? []} />
         )}
 
-        {/* Footer */}
-        <div className="mt-4 flex items-center gap-1.5 text-white/30 text-xs">
-          <Music2 className="w-3 h-3" />
-          <span>Powered by FlyLink</span>
-        </div>
+        {/* Footer — white-label removes it on paid plans */}
+        {!(artist.hide_branding && ['pro', 'label', 'signed', 'enterprise'].includes(artist.profiles?.plan)) && (
+          <div className="mt-4 flex items-center gap-1.5 text-white/30 text-xs">
+            <Music2 className="w-3 h-3" />
+            <span>Powered by FlyLink</span>
+          </div>
+        )}
       </div>
     </div>
   )

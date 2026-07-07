@@ -109,6 +109,7 @@ export async function getArtistBySlug(slug: string) {
     .from('artists')
     .select(`
       *,
+      profiles(plan),
       social_links(*),
       custom_links(*),
       artist_page_sections(*),

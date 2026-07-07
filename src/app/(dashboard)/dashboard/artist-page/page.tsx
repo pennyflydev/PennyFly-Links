@@ -39,6 +39,9 @@ export default function ArtistPageEditor() {
   const [customLinks, setCustomLinks] = useState<{ label: string; url: string }[]>([])
   const [playlists, setPlaylists] = useState<{ title: string; spotify_url: string }[]>([])
   const [mediaEmbeds, setMediaEmbeds] = useState<{ url: string }[]>([])
+  const [seoTitle, setSeoTitle] = useState('')
+  const [seoDescription, setSeoDescription] = useState('')
+  const [hideBranding, setHideBranding] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -58,6 +61,9 @@ export default function ArtistPageEditor() {
           setSlug(artist.slug ?? '')
           setAvatarUrl(artist.avatar_url ?? null)
           setCoverUrl(artist.cover_url ?? null)
+          setSeoTitle(artist.seo_title ?? '')
+          setSeoDescription(artist.seo_description ?? '')
+          setHideBranding(artist.hide_branding ?? false)
         }
         const loaded: Section[] = sections?.length
           ? sections
@@ -119,6 +125,7 @@ export default function ArtistPageEditor() {
             artist_name: artistName, bio, theme, avatar_url: avatarUrl, cover_url: coverUrl,
             background_type: bgValue.includes('gradient') ? 'gradient' : 'color',
             background_value: bgValue,
+            seo_title: seoTitle, seo_description: seoDescription, hide_branding: hideBranding,
           }),
         }),
         fetch('/api/sections', {
@@ -447,6 +454,35 @@ export default function ArtistPageEditor() {
               )}
               <div className="border-t border-zinc-800 px-4 py-2">
                 <p className="text-xs text-zinc-600">Paste a track, album, playlist, or video link — it embeds a live player.</p>
+              </div>
+            </div>
+
+            {/* SEO & Branding */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-4 py-3">
+                <span className="text-sm font-medium text-white">SEO &amp; Branding</span>
+              </div>
+              <div className="border-t border-zinc-800 p-3 space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Page title <span className="text-zinc-600">(search &amp; social)</span></label>
+                  <input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} placeholder={`${artistName || 'Artist'} | FlyLink`}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Meta description</label>
+                  <textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={2} placeholder="Shown in Google results and link previews"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 resize-none" />
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <div>
+                    <p className="text-xs font-medium text-white">Hide &quot;Powered by FlyLink&quot;</p>
+                    <p className="text-[11px] text-zinc-600">Available on Pro and above</p>
+                  </div>
+                  <button onClick={() => setHideBranding(!hideBranding)}
+                    className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${hideBranding ? 'bg-yellow-400 justify-end' : 'bg-zinc-700 justify-start'}`}>
+                    <span className="w-4 h-4 bg-white rounded-full shadow" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

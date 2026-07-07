@@ -64,6 +64,9 @@ create table artists (
   tiktok_pixel_id    text,
   ga_measurement_id  text,
   fan_wall_enabled   boolean not null default false,
+  seo_title          text,
+  seo_description    text,
+  hide_branding      boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );

@@ -126,6 +126,11 @@ alter table media_embeds enable row level security;
 drop policy if exists "Anyone can read media embeds" on media_embeds;
 create policy "Anyone can read media embeds" on media_embeds for select using (true);
 
+-- ── 0013 · SEO controls + white-label ───────────────────────────────────
+alter table artists add column if not exists seo_title       text;
+alter table artists add column if not exists seo_description text;
+alter table artists add column if not exists hide_branding   boolean not null default false;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)
