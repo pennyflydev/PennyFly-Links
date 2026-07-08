@@ -108,6 +108,7 @@ create table artists (
   shopify_domain     text,
   shopify_token      text,
   bandsintown_artist text,
+  spotify_artist_id  text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );

@@ -36,6 +36,51 @@ export function parseSpotifyArtistId(url: string): string | null {
   return m ? m[1] : null
 }
 
+// Public Spotify metrics for the analytics dashboard. NOTE: the public Web
+// API does NOT expose stream counts or monthly listeners (those are Spotify
+// for Artists only). This returns what the public API genuinely provides:
+// total followers, a 0-100 popularity index, and top tracks by popularity.
+export async function fetchArtistInsights(artistId: string) {
+  const token = await getAppToken()
+  if (!token) return null
+  const headers = { Authorization: `Bearer ${token}` }
+
+  const [artistRes, topRes] = await Promise.all([
+    fetch(`${API}/artists/${artistId}`, { headers, next: { revalidate: 3600 } }),
+    fetch(`${API}/artists/${artistId}/top-tracks?market=US`, { headers, next: { revalidate: 3600 } }),
+  ])
+  if (!artistRes.ok) return null
+
+  const a = (await artistRes.json()) as {
+    name: string
+    images?: { url: string }[]
+    genres?: string[]
+    followers?: { total?: number }
+    popularity?: number
+    external_urls?: { spotify?: string }
+  }
+  const topTracks = topRes.ok
+    ? ((await topRes.json()) as {
+        tracks?: { name: string; popularity: number; external_urls?: { spotify?: string }; album?: { images?: { url: string }[] } }[]
+      }).tracks ?? []
+    : []
+
+  return {
+    name: a.name,
+    image: a.images?.[0]?.url ?? null,
+    url: a.external_urls?.spotify ?? null,
+    genres: (a.genres ?? []).slice(0, 5),
+    followers: a.followers?.total ?? 0,
+    popularity: a.popularity ?? 0,
+    topTracks: topTracks.slice(0, 5).map((t) => ({
+      name: t.name,
+      popularity: t.popularity,
+      url: t.external_urls?.spotify ?? null,
+      coverUrl: t.album?.images?.[t.album.images.length - 1]?.url ?? null,
+    })),
+  }
+}
+
 // Public artist profile (name, image, genres) + latest releases.
 export async function fetchArtistProfile(artistId: string) {
   const token = await getAppToken()

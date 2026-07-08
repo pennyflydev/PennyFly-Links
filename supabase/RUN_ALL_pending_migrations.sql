@@ -272,6 +272,9 @@ alter table events  add column if not exists external_id  text;
 create unique index if not exists events_artist_external_idx
   on events (artist_id, external_id) where external_id is not null;
 
+-- ── 0028 · Spotify Insights ─────────────────────────────────────────────
+alter table artists add column if not exists spotify_artist_id text;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,

@@ -1,6 +1,7 @@
 import { getArtistForCurrentUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/server'
 import AnalyticsClient from './AnalyticsClient'
+import SpotifyInsights from './SpotifyInsights'
 
 export default async function AnalyticsPage() {
   const artist = await getArtistForCurrentUser()
@@ -34,11 +35,16 @@ export default async function AnalyticsPage() {
   ])
 
   return (
-    <AnalyticsClient
-      events={events.data ?? []}
-      links={links.data ?? []}
-      subscribers={subscribers.data ?? []}
-      presaves={presaves.data ?? []}
-    />
+    <>
+      <AnalyticsClient
+        events={events.data ?? []}
+        links={links.data ?? []}
+        subscribers={subscribers.data ?? []}
+        presaves={presaves.data ?? []}
+      />
+      <div className="px-8 pb-8">
+        <SpotifyInsights spotifyArtistId={(artist as { spotify_artist_id?: string }).spotify_artist_id ?? null} />
+      </div>
+    </>
   )
 }
