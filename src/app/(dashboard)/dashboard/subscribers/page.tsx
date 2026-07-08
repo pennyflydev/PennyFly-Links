@@ -10,7 +10,7 @@ export default async function SubscribersPage() {
     const supabase = createAdminClient()
     const { data } = await supabase
       .from('subscribers')
-      .select('id, email, name, source, country, created_at')
+      .select('id, email, name, source, country, is_superfan, created_at')
       .eq('artist_id', artist.id)
       .order('created_at', { ascending: false })
     subscribers = data ?? []
@@ -24,7 +24,7 @@ export default async function SubscribersPage() {
     { label: 'Total Subscribers', value: subscribers.length },
     { label: 'New This Week', value: subscribers.filter((s) => new Date(s.created_at).getTime() >= weekAgo).length },
     { label: 'New This Month', value: subscribers.filter((s) => new Date(s.created_at).getTime() >= monthAgo).length },
-    { label: 'Sources', value: new Set(subscribers.map((s) => s.source)).size },
+    { label: 'Superfans', value: subscribers.filter((s) => s.is_superfan).length },
   ]
 
   return <SubscribersClient subscribers={subscribers} stats={stats} />

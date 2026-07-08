@@ -243,6 +243,9 @@ create table if not exists exclusive_content (
 );
 alter table exclusive_content enable row level security;  -- no public read: reward stays secret
 
+-- ── 0024 · Superfan CRM ─────────────────────────────────────────────────
+alter table subscribers add column if not exists is_superfan boolean not null default false;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Download } from 'lucide-react'
+import { Users, Download, Star } from 'lucide-react'
 
 export type Subscriber = {
   id: string
@@ -9,6 +9,7 @@ export type Subscriber = {
   name: string | null
   source: string
   country: string | null
+  is_superfan: boolean
   created_at: string
 }
 
@@ -18,7 +19,7 @@ const SOURCE_LABELS: Record<string, string> = {
   imported: 'Imported',
 }
 
-const FILTERS = ['All', 'Pre-Save', 'Email Capture', 'Imported'] as const
+const FILTERS = ['All', 'Superfans', 'Pre-Save', 'Email Capture', 'Imported'] as const
 const FILTER_TO_SOURCE: Record<string, string | null> = {
   All: null,
   'Pre-Save': 'presave',
@@ -34,18 +35,44 @@ export default function SubscribersClient({
   stats: { label: string; value: number }[]
 }) {
   const [filter, setFilter] = useState<string>('All')
+  const [fans, setFans] = useState<Subscriber[]>(subscribers)
+  const [saving, setSaving] = useState<string | null>(null)
 
   const source = FILTER_TO_SOURCE[filter]
-  const rows = source ? subscribers.filter((s) => s.source === source) : subscribers
+  const rows =
+    filter === 'Superfans'
+      ? fans.filter((s) => s.is_superfan)
+      : source
+        ? fans.filter((s) => s.source === source)
+        : fans
+
+  async function toggleSuperfan(id: string, next: boolean) {
+    setSaving(id)
+    setFans((prev) => prev.map((s) => (s.id === id ? { ...s, is_superfan: next } : s)))
+    try {
+      const res = await fetch(`/api/subscribers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_superfan: next }),
+      })
+      if (!res.ok) throw new Error('failed')
+    } catch {
+      // revert on failure
+      setFans((prev) => prev.map((s) => (s.id === id ? { ...s, is_superfan: !next } : s)))
+    } finally {
+      setSaving(null)
+    }
+  }
 
   function exportCsv() {
-    const header = ['Email', 'Name', 'Source', 'Country', 'Date Added']
+    const header = ['Email', 'Name', 'Source', 'Country', 'Superfan', 'Date Added']
     const lines = rows.map((s) =>
       [
         s.email,
         s.name ?? '',
         SOURCE_LABELS[s.source] ?? s.source,
         s.country ?? '',
+        s.is_superfan ? 'Yes' : 'No',
         new Date(s.created_at).toISOString().split('T')[0],
       ]
         .map((v) => `"${String(v).replace(/"/g, '""')}"`)
@@ -114,6 +141,7 @@ export default function SubscribersClient({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-zinc-500 border-b border-zinc-800 text-left">
+                <th className="px-5 py-3 font-medium w-10"></th>
                 <th className="px-5 py-3 font-medium">Email</th>
                 <th className="px-5 py-3 font-medium">Name</th>
                 <th className="px-5 py-3 font-medium">Source</th>
@@ -123,6 +151,20 @@ export default function SubscribersClient({
             <tbody className="divide-y divide-zinc-800">
               {rows.map((s) => (
                 <tr key={s.id} className="text-zinc-300 hover:bg-zinc-800/30 transition-colors">
+                  <td className="px-5 py-3">
+                    <button
+                      onClick={() => toggleSuperfan(s.id, !s.is_superfan)}
+                      disabled={saving === s.id}
+                      title={s.is_superfan ? 'Remove superfan tag' : 'Mark as superfan'}
+                      className="disabled:opacity-40 transition-colors"
+                    >
+                      <Star
+                        className={`w-4 h-4 ${
+                          s.is_superfan ? 'fill-amber-400 text-amber-400' : 'text-zinc-600 hover:text-zinc-400'
+                        }`}
+                      />
+                    </button>
+                  </td>
                   <td className="px-5 py-3 text-white">{s.email}</td>
                   <td className="px-5 py-3 text-zinc-400">{s.name || '—'}</td>
                   <td className="px-5 py-3">

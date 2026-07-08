@@ -245,6 +245,7 @@ create table subscribers (
   source_id     uuid,
   spotify_id    text,
   country       text,
+  is_superfan   boolean not null default false,
   synced_at     timestamptz,
   created_at    timestamptz not null default now(),
   unique (artist_id, email)
