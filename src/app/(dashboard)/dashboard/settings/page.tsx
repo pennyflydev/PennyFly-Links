@@ -32,6 +32,8 @@ export default function SettingsPage() {
   const [metaPixel, setMetaPixel] = useState('')
   const [tiktokPixel, setTiktokPixel] = useState('')
   const [gaId, setGaId] = useState('')
+  const [walletEnabled, setWalletEnabled] = useState(false)
+  const [walletBusy, setWalletBusy] = useState(false)
   const [plan, setPlan] = useState('starter')
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly')
   const [billingBusy, setBillingBusy] = useState(false)
@@ -59,6 +61,7 @@ export default function SettingsPage() {
           setMetaPixel(artist.meta_pixel_id ?? '')
           setTiktokPixel(artist.tiktok_pixel_id ?? '')
           setGaId(artist.ga_measurement_id ?? '')
+          setWalletEnabled(!!artist.wallet_pass_enabled)
           setPlan(artist.profiles?.plan ?? 'starter')
         }
       })
@@ -121,6 +124,28 @@ export default function SettingsPage() {
       setError('Could not save')
     }
     setSaving(false)
+  }
+
+  async function toggleWallet(next: boolean) {
+    setWalletBusy(true)
+    setError('')
+    setWalletEnabled(next)
+    try {
+      const res = await fetch('/api/artist', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet_pass_enabled: next }),
+      })
+      if (!res.ok) {
+        setWalletEnabled(!next)
+        const data = await res.json()
+        setError(data.error ?? 'Could not update')
+      }
+    } catch {
+      setWalletEnabled(!next)
+      setError('Could not update')
+    }
+    setWalletBusy(false)
   }
 
   async function startCheckout(planId: string) {
@@ -402,6 +427,28 @@ export default function SettingsPage() {
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {saved ? <><Check className="w-4 h-4" /> Saved</> : 'Save Pixels'}
                 </button>
+              </div>
+
+              {/* Wallet pass */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div className="pr-4">
+                    <h2 className="text-base font-semibold text-white">Wallet Pass</h2>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Show a “Save to Wallet” button on your page so fans keep you one tap away. Google Wallet
+                      activates once the platform keys are set; Apple Wallet needs an Apple Developer certificate.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleWallet(!walletEnabled)}
+                    disabled={walletBusy}
+                    role="switch"
+                    aria-checked={walletEnabled}
+                    className={`relative w-11 h-6 rounded-full shrink-0 transition-colors disabled:opacity-50 ${walletEnabled ? 'bg-yellow-400' : 'bg-zinc-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${walletEnabled ? 'translate-x-5' : ''}`} />
+                  </button>
+                </div>
               </div>
 
               {/* Email integrations — coming soon */}

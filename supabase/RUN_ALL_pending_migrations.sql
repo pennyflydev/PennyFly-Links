@@ -275,6 +275,9 @@ create unique index if not exists events_artist_external_idx
 -- ── 0028 · Spotify Insights ─────────────────────────────────────────────
 alter table artists add column if not exists spotify_artist_id text;
 
+-- ── 0029 · Wallet passes ────────────────────────────────────────────────
+alter table artists add column if not exists wallet_pass_enabled boolean not null default false;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,

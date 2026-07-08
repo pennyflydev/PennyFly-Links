@@ -2,10 +2,11 @@ import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist, getCurrentProfile } from '@/lib/supabase/queries'
-import { Music2, Globe, ExternalLink } from 'lucide-react'
+import { Music2, Globe, ExternalLink, Wallet } from 'lucide-react'
 import type { Metadata } from 'next'
 import { toMediaEmbed, deviceFromUA, fontFamilyFor, buttonRadiusFor } from '@/lib/utils'
 import { fetchShopifyProducts, formatShopifyPrice } from '@/lib/shopify/storefront'
+import { buildGoogleWalletSaveUrl } from '@/lib/wallet/google'
 import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
 import DropAlerts from './DropAlerts'
@@ -96,6 +97,12 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
     isFollowing = !!existingFollow
   }
 
+  // "Save to Google Wallet" link (null unless the artist enabled it AND Google
+  // Wallet is configured on the platform).
+  const walletUrl = artist.wallet_pass_enabled
+    ? buildGoogleWalletSaveUrl({ id: artist.id, artist_name: artist.artist_name, slug: artist.slug, avatar_url: artist.avatar_url })
+    : null
+
   // Active label-wide campaigns (cross-promo across the roster).
   const labelCampaigns = artist.label_id
     ? (await createAdminClient()
@@ -155,6 +162,18 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
               initialCount={followerCount ?? 0}
               radiusClass={radiusClass}
             />
+            {/* Save to Google Wallet */}
+            {walletUrl && (
+              <a
+                href={walletUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 text-white text-xs font-semibold transition-colors hover:bg-white/15 ${radiusClass}`}
+              >
+                <Wallet className="w-4 h-4" />
+                Save to Wallet
+              </a>
+            )}
           </div>
         )}
 

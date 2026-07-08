@@ -109,6 +109,7 @@ create table artists (
   shopify_token      text,
   bandsintown_artist text,
   spotify_artist_id  text,
+  wallet_pass_enabled boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
