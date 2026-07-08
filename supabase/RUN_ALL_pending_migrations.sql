@@ -211,6 +211,24 @@ alter table label_campaigns enable row level security;
 drop policy if exists "Anyone can read active label campaigns" on label_campaigns;
 create policy "Anyone can read active label campaigns" on label_campaigns for select using (is_active = true);
 
+-- ── 0022 · Fan memberships ──────────────────────────────────────────────
+create table if not exists membership_tiers (
+  id          uuid primary key default gen_random_uuid(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  name        text not null,
+  price_cents integer not null default 0,
+  interval    text not null default 'month' check (interval in ('month', 'year')),
+  description text default '',
+  perks       text[] default '{}',
+  join_url    text,
+  is_active   boolean not null default true,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+alter table membership_tiers enable row level security;
+drop policy if exists "Anyone can read active tiers" on membership_tiers;
+create policy "Anyone can read active tiers" on membership_tiers for select using (is_active = true);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

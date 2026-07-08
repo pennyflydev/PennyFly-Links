@@ -241,6 +241,37 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           </div>
         )}
 
+        {/* Membership */}
+        {artist.membership_tiers?.length > 0 && (
+          <div className="w-full space-y-2">
+            <p className="text-xs font-medium text-white/50 uppercase tracking-wider px-1">Membership</p>
+            {([...(artist.membership_tiers as { id: string; name: string; price_cents: number; interval: string; description: string; perks: string[]; join_url: string | null; sort_order: number }[])]
+              .sort((a, b) => a.sort_order - b.sort_order))
+              .map((t) => (
+                <div key={t.id} className={`w-full bg-white/10 border border-white/20 ${radiusClass} p-4`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="font-semibold">{t.name}</p>
+                    <p className="text-sm text-white/70">
+                      {t.price_cents > 0 ? `$${(t.price_cents / 100).toFixed(2)}` : 'Free'}<span className="text-white/40">/{t.interval === 'year' ? 'yr' : 'mo'}</span>
+                    </p>
+                  </div>
+                  {t.description && <p className="text-xs text-white/60 mb-2">{t.description}</p>}
+                  {t.perks?.length > 0 && (
+                    <ul className="space-y-1 mb-3">
+                      {t.perks.map((p, i) => <li key={i} className="text-xs text-white/70 flex gap-1.5"><span className="text-[#1DB954]">✓</span>{p}</li>)}
+                    </ul>
+                  )}
+                  {t.join_url && (
+                    <a href={t.join_url} target="_blank" rel="noopener noreferrer"
+                      className="block w-full text-center py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors">
+                      Join
+                    </a>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+
         {/* Merch (live from Shopify) */}
         {shopifyProducts.length > 0 && (
           <div className="w-full space-y-2">
