@@ -54,6 +54,15 @@ export async function POST(req: NextRequest) {
       await applySubscription(event.data.object as Stripe.Subscription)
       break
     }
+    // Stripe Connect: keep the artist's payout-readiness in sync.
+    case 'account.updated': {
+      const account = event.data.object as Stripe.Account
+      await supabase
+        .from('artists')
+        .update({ stripe_charges_enabled: !!account.charges_enabled })
+        .eq('stripe_account_id', account.id)
+      break
+    }
   }
 
   return NextResponse.json({ received: true })

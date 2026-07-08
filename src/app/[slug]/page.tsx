@@ -12,6 +12,7 @@ import FanWall from './FanWall'
 import DropAlerts from './DropAlerts'
 import FollowButton from './FollowButton'
 import SmsSignup from './SmsSignup'
+import BuyButton from './BuyButton'
 import PixelScripts from '@/components/PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -291,12 +292,12 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
                     <p className="font-medium truncate">{pr.title}</p>
                     <p className="text-xs text-white/60">{pr.price_cents > 0 ? `$${(pr.price_cents / 100).toFixed(2)}` : 'Free'}</p>
                   </div>
-                  {pr.buy_url && (
-                    <a href={pr.buy_url} target="_blank" rel="noopener noreferrer"
-                      className="px-4 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors shrink-0">
-                      Buy
-                    </a>
-                  )}
+                  <BuyButton
+                    productId={pr.id}
+                    buyUrl={pr.buy_url ?? null}
+                    nativeCheckout={!!artist.stripe_charges_enabled && pr.price_cents > 0}
+                    className="px-4 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors shrink-0 flex items-center justify-center min-w-[64px]"
+                  />
                 </div>
               ))}
           </div>

@@ -19,6 +19,7 @@ import {
   ShoppingBag,
   Star,
   Smartphone,
+  CreditCard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/dashboard/events', label: 'Events', icon: CalendarDays },
   { href: '/dashboard/store', label: 'Store', icon: ShoppingBag },
   { href: '/dashboard/membership', label: 'Membership', icon: Star },
+  { href: '/dashboard/payments', label: 'Payments', icon: CreditCard },
   { href: '/dashboard/subscribers', label: 'Subscribers', icon: Users },
   { href: '/dashboard/sms', label: 'SMS Alerts', icon: Smartphone },
   { href: '/dashboard/fan-wall', label: 'Fan Wall', icon: MessageSquare },

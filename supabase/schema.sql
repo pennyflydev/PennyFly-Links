@@ -111,6 +111,8 @@ create table artists (
   spotify_artist_id  text,
   wallet_pass_enabled boolean not null default false,
   sms_enabled        boolean not null default false,
+  stripe_account_id      text,
+  stripe_charges_enabled boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );

@@ -294,6 +294,10 @@ create table if not exists sms_subscribers (
 alter table sms_subscribers enable row level security;
 create index if not exists sms_subscribers_phone_idx on sms_subscribers (phone);
 
+-- ── 0031 · Stripe Connect (Express) ─────────────────────────────────────
+alter table artists add column if not exists stripe_account_id      text;
+alter table artists add column if not exists stripe_charges_enabled boolean not null default false;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,
