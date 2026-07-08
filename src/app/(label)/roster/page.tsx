@@ -38,8 +38,28 @@ export default async function RosterPage() {
   if (!isAdmin) artistsQuery = artistsQuery.eq('label_id', labelId)
 
   const { data: artistsData } = await artistsQuery
-  const roster = (artistsData ?? []) as unknown as RosterArtist[]
-  const artistIds = roster.map((a) => a.id)
+  const rosterRaw = (artistsData ?? []) as unknown as RosterArtist[]
+  const artistIds = rosterRaw.map((a) => a.id)
+
+  // Per-artist clicks/views from the denormalized promo_links counters.
+  const perArtist = new Map<string, { clicks: number; views: number }>()
+  if (artistIds.length) {
+    const { data: pl } = await supabase
+      .from('promo_links')
+      .select('artist_id, view_count, click_count')
+      .in('artist_id', artistIds)
+    for (const row of pl ?? []) {
+      const cur = perArtist.get(row.artist_id) ?? { clicks: 0, views: 0 }
+      cur.clicks += row.click_count ?? 0
+      cur.views += row.view_count ?? 0
+      perArtist.set(row.artist_id, cur)
+    }
+  }
+
+  // Rank as a leaderboard by clicks.
+  const roster = rosterRaw
+    .map((a) => ({ ...a, clicks: perArtist.get(a.id)?.clicks ?? 0, views: perArtist.get(a.id)?.views ?? 0 }))
+    .sort((a, b) => b.clicks - a.clicks)
 
   // Aggregate stats (scoped for labels)
   let fansCount = 0
@@ -122,17 +142,21 @@ export default async function RosterPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-zinc-500 border-b border-zinc-800 text-left">
+                <th className="px-5 py-3 font-medium w-8">#</th>
                 <th className="px-5 py-3 font-medium">Artist</th>
                 <th className="px-5 py-3 font-medium">Page</th>
-                <th className="px-5 py-3 font-medium">Plan</th>
-                <th className="px-5 py-3 font-medium">Fans</th>
-                <th className="px-5 py-3 font-medium">Joined</th>
+                <th className="px-5 py-3 font-medium text-right">Clicks</th>
+                <th className="px-5 py-3 font-medium text-right">Views</th>
+                <th className="px-5 py-3 font-medium text-right">Fans</th>
                 <th className="px-5 py-3 font-medium text-right">Manage</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {roster.map((a) => (
+              {roster.map((a, i) => (
                 <tr key={a.id} className="text-zinc-300 hover:bg-zinc-800/30 transition-colors">
+                  <td className="px-5 py-3">
+                    <span className={`tabular-nums font-semibold ${i === 0 ? 'text-yellow-400' : 'text-zinc-500'}`}>{i + 1}</span>
+                  </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
                       <span className="text-white font-medium">{a.artist_name || 'Unnamed'}</span>
@@ -145,11 +169,9 @@ export default async function RosterPage() {
                   <td className="px-5 py-3">
                     <Link href={`/${a.slug}`} target="_blank" className="text-yellow-400 hover:underline">/{a.slug}</Link>
                   </td>
-                  <td className="px-5 py-3 capitalize text-zinc-400">{a.profiles?.plan ?? '—'}</td>
-                  <td className="px-5 py-3 text-zinc-400">{a.subscribers?.[0]?.count ?? 0}</td>
-                  <td className="px-5 py-3 text-zinc-500">
-                    {new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </td>
+                  <td className="px-5 py-3 text-right tabular-nums text-white font-medium">{a.clicks.toLocaleString()}</td>
+                  <td className="px-5 py-3 text-right tabular-nums text-zinc-400">{a.views.toLocaleString()}</td>
+                  <td className="px-5 py-3 text-right tabular-nums text-zinc-400">{a.subscribers?.[0]?.count ?? 0}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-2">
                       {isAdmin && a.profiles && (
