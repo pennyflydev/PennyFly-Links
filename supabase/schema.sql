@@ -107,6 +107,7 @@ create table artists (
   button_style       text not null default 'rounded',
   shopify_domain     text,
   shopify_token      text,
+  bandsintown_artist text,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
@@ -439,9 +440,13 @@ create table events (
   city         text default '',
   ticket_url   text,
   is_published boolean not null default false,
+  source       text not null default 'manual',
+  external_id  text,
   created_at   timestamptz not null default now()
 );
 alter table events enable row level security;
+create unique index if not exists events_artist_external_idx
+  on events (artist_id, external_id) where external_id is not null;
 create policy "Anyone can read published events" on events for select using (is_published = true);
 create policy "Artist can manage own events" on events for all using (
   artist_id in (

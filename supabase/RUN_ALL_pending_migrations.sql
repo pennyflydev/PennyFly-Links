@@ -265,6 +265,13 @@ create table if not exists fan_follows (
 alter table fan_follows enable row level security;
 create index if not exists fan_follows_artist_idx on fan_follows (artist_id);
 
+-- ── 0027 · Bandsintown auto-import ──────────────────────────────────────
+alter table artists add column if not exists bandsintown_artist text;
+alter table events  add column if not exists source      text not null default 'manual';
+alter table events  add column if not exists external_id  text;
+create unique index if not exists events_artist_external_idx
+  on events (artist_id, external_id) where external_id is not null;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,

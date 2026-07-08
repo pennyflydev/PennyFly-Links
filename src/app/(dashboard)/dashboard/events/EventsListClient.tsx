@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, CalendarDays, Copy, Trash2, Check, Loader2, MapPin } from 'lucide-react'
+import { Plus, CalendarDays, Copy, Trash2, Check, Loader2, MapPin, Download } from 'lucide-react'
 
 export type EventRow = {
   id: string
@@ -14,10 +15,77 @@ export type EventRow = {
   is_published: boolean
 }
 
-export default function EventsListClient({ initialEvents }: { initialEvents: EventRow[] }) {
+export default function EventsListClient({
+  initialEvents,
+  bandsintownArtist = '',
+}: {
+  initialEvents: EventRow[]
+  bandsintownArtist?: string
+}) {
+  const router = useRouter()
   const [events, setEvents] = useState(initialEvents)
   const [busy, setBusy] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+
+  const [handle, setHandle] = useState(bandsintownArtist)
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState<string | null>(null)
+
+  async function importBandsintown() {
+    if (!handle.trim() || importing) return
+    setImporting(true)
+    setImportMsg(null)
+    try {
+      const res = await fetch('/api/import/bandsintown', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artist: handle }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setImportMsg(data.error ?? 'Import failed')
+      } else if (data.total === 0) {
+        setImportMsg(data.message ?? 'No upcoming shows found.')
+      } else {
+        setImportMsg(`Synced ${data.total} show${data.total === 1 ? '' : 's'} — ${data.imported} new, ${data.updated} updated.`)
+        router.refresh()
+      }
+    } catch {
+      setImportMsg('Import failed — please try again.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const importBar = (
+    <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Download className="w-4 h-4 text-yellow-400" />
+        <p className="text-sm font-medium text-white">Import tour dates from Bandsintown</p>
+      </div>
+      <p className="text-xs text-zinc-500 mb-3">
+        Enter your Bandsintown artist name (or profile URL). We&apos;ll pull your upcoming shows and keep them in sync
+        on re-import — no duplicates.
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          value={handle}
+          onChange={(e) => setHandle(e.target.value)}
+          placeholder="e.g. Your Artist Name"
+          className="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+        />
+        <button
+          onClick={importBandsintown}
+          disabled={importing || !handle.trim()}
+          className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-white/90 disabled:opacity-50 transition-colors"
+        >
+          {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          {importing ? 'Syncing…' : 'Import'}
+        </button>
+      </div>
+      {importMsg && <p className="text-xs text-zinc-400 mt-2">{importMsg}</p>}
+    </div>
+  )
 
   async function togglePublish(ev: EventRow) {
     setBusy(ev.id)
@@ -46,21 +114,25 @@ export default function EventsListClient({ initialEvents }: { initialEvents: Eve
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="w-14 h-14 bg-yellow-400/10 rounded-2xl flex items-center justify-center mb-4">
-          <CalendarDays className="w-7 h-7 text-yellow-400" />
+      <>
+        {importBar}
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-14 h-14 bg-yellow-400/10 rounded-2xl flex items-center justify-center mb-4">
+            <CalendarDays className="w-7 h-7 text-yellow-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">No events yet</h2>
+          <p className="text-zinc-400 text-sm mb-6 max-w-sm">Import your tour from Bandsintown above, or create a landing page for your next show, listening session, or album launch.</p>
+          <Link href="/dashboard/events/create" className="flex items-center gap-2 px-5 py-2.5 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 transition-colors">
+            <Plus className="w-4 h-4" />Create Your First Event
+          </Link>
         </div>
-        <h2 className="text-xl font-semibold text-white mb-2">No events yet</h2>
-        <p className="text-zinc-400 text-sm mb-6 max-w-sm">Create a landing page for your next show, listening session, or album launch.</p>
-        <Link href="/dashboard/events/create" className="flex items-center gap-2 px-5 py-2.5 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 transition-colors">
-          <Plus className="w-4 h-4" />Create Your First Event
-        </Link>
-      </div>
+      </>
     )
   }
 
   return (
     <div className="space-y-3">
+      {importBar}
       {events.map((ev) => (
         <div key={ev.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex items-center justify-between hover:border-zinc-700 transition-colors">
           <div>

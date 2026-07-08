@@ -18,6 +18,8 @@ export default async function EventsPage() {
     events = data ?? []
   }
 
+  const bandsintownArtist = (artist as { bandsintown_artist?: string } | null)?.bandsintown_artist ?? ''
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
@@ -30,7 +32,7 @@ export default async function EventsPage() {
         </Link>
       </div>
 
-      <EventsListClient initialEvents={events} />
+      <EventsListClient initialEvents={events} bandsintownArtist={bandsintownArtist} />
     </div>
   )
 }
