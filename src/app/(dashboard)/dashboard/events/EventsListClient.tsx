@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, CalendarDays, Copy, Trash2, Check, Loader2, MapPin, Download } from 'lucide-react'
+import { Plus, CalendarDays, Copy, Trash2, Check, Loader2, MapPin, Download, Ticket } from 'lucide-react'
 
 export type EventRow = {
   id: string
@@ -152,6 +152,7 @@ export default function EventsListClient({
               {copied === ev.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
             </button>
             <a href={`/events/${ev.slug}`} target="_blank" className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors">View</a>
+            <Link href={`/dashboard/events/${ev.id}/tickets`} className="flex items-center gap-1 px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors"><Ticket className="w-3.5 h-3.5" />Tickets</Link>
             <Link href={`/dashboard/events/${ev.id}/edit`} className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors">Edit</Link>
             <button onClick={() => togglePublish(ev)} disabled={busy === ev.id}
               className="px-3 py-1.5 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 disabled:opacity-50 transition-colors min-w-[78px]">

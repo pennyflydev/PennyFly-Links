@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStripe, planForPriceId } from '@/lib/stripe'
@@ -46,6 +47,27 @@ export async function POST(req: NextRequest) {
       if (session.subscription) {
         const sub = await stripe.subscriptions.retrieve(session.subscription as string)
         await applySubscription(sub)
+      } else if (session.metadata?.kind === 'ticket') {
+        // Issue the paid ticket now that payment succeeded (idempotent on order_id).
+        const m = session.metadata
+        const { data: existing } = await supabase.from('tickets').select('id').eq('order_id', session.id).maybeSingle()
+        if (!existing) {
+          const token = randomBytes(16).toString('hex')
+          const { error } = await supabase.from('tickets').insert({
+            event_id: m.eventId,
+            artist_id: m.artistId,
+            ticket_type_id: m.ticketTypeId,
+            token,
+            buyer_name: m.buyerName ?? null,
+            buyer_email: m.buyerEmail ?? session.customer_details?.email ?? null,
+            status: 'valid',
+            order_id: session.id,
+          })
+          if (!error) {
+            const { data: tt } = await supabase.from('ticket_types').select('sold').eq('id', m.ticketTypeId).single()
+            if (tt) await supabase.from('ticket_types').update({ sold: tt.sold + 1 }).eq('id', m.ticketTypeId)
+          }
+        }
       }
       break
     }

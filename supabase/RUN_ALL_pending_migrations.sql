@@ -298,6 +298,40 @@ create index if not exists sms_subscribers_phone_idx on sms_subscribers (phone);
 alter table artists add column if not exists stripe_account_id      text;
 alter table artists add column if not exists stripe_charges_enabled boolean not null default false;
 
+-- ── 0032 · Ticketing ────────────────────────────────────────────────────
+create table if not exists ticket_types (
+  id          uuid primary key default gen_random_uuid(),
+  event_id    uuid not null references events(id) on delete cascade,
+  artist_id   uuid not null references artists(id) on delete cascade,
+  name        text not null,
+  price_cents integer not null default 0,
+  quantity    integer,
+  sold        integer not null default 0,
+  is_active   boolean not null default true,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+alter table ticket_types enable row level security;
+drop policy if exists "Anyone can read active ticket types" on ticket_types;
+create policy "Anyone can read active ticket types" on ticket_types for select using (is_active = true);
+
+create table if not exists tickets (
+  id             uuid primary key default gen_random_uuid(),
+  event_id       uuid not null references events(id) on delete cascade,
+  artist_id      uuid not null references artists(id) on delete cascade,
+  ticket_type_id uuid references ticket_types(id) on delete set null,
+  token          text not null unique,
+  buyer_name     text,
+  buyer_email    text,
+  status         text not null default 'valid' check (status in ('valid', 'used', 'refunded')),
+  checked_in_at  timestamptz,
+  order_id       text,
+  created_at     timestamptz not null default now()
+);
+alter table tickets enable row level security;
+create index if not exists tickets_event_idx on tickets (event_id);
+create index if not exists tickets_token_idx on tickets (token);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,

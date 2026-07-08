@@ -8,11 +8,22 @@ async function getEvent(slug: string) {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('events')
-    .select('*, artists(artist_name, slug, meta_pixel_id, tiktok_pixel_id, ga_measurement_id)')
+    .select('*, artists(artist_name, slug, meta_pixel_id, tiktok_pixel_id, ga_measurement_id, stripe_charges_enabled)')
     .eq('slug', slug)
     .eq('is_published', true)
     .single()
   return data
+}
+
+async function getTicketTypes(eventId: string) {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('ticket_types')
+    .select('id, name, price_cents, quantity, sold')
+    .eq('event_id', eventId)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+  return data ?? []
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -32,6 +43,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const event = await getEvent(slug)
   if (!event) notFound()
 
+  const ticketTypes = await getTicketTypes(event.id)
+
   return (
     <>
       <PixelScripts
@@ -49,6 +62,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         venue={event.venue}
         city={event.city}
         ticketUrl={event.ticket_url}
+        ticketTypes={ticketTypes}
+        chargesEnabled={!!event.artists?.stripe_charges_enabled}
       />
     </>
   )
