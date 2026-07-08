@@ -18,6 +18,7 @@ import {
   Gift,
   ShoppingBag,
   Star,
+  Smartphone,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/dashboard/store', label: 'Store', icon: ShoppingBag },
   { href: '/dashboard/membership', label: 'Membership', icon: Star },
   { href: '/dashboard/subscribers', label: 'Subscribers', icon: Users },
+  { href: '/dashboard/sms', label: 'SMS Alerts', icon: Smartphone },
   { href: '/dashboard/fan-wall', label: 'Fan Wall', icon: MessageSquare },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]

@@ -278,6 +278,22 @@ alter table artists add column if not exists spotify_artist_id text;
 -- ── 0029 · Wallet passes ────────────────────────────────────────────────
 alter table artists add column if not exists wallet_pass_enabled boolean not null default false;
 
+-- ── 0030 · SMS capture + drop alerts ────────────────────────────────────
+alter table artists add column if not exists sms_enabled boolean not null default false;
+
+create table if not exists sms_subscribers (
+  id          uuid primary key default gen_random_uuid(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  phone       text not null,
+  status      text not null default 'active' check (status in ('active', 'unsubscribed')),
+  source      text not null default 'page',
+  consent_at  timestamptz not null default now(),
+  created_at  timestamptz not null default now(),
+  unique (artist_id, phone)
+);
+alter table sms_subscribers enable row level security;
+create index if not exists sms_subscribers_phone_idx on sms_subscribers (phone);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,

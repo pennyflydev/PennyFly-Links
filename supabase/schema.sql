@@ -110,6 +110,7 @@ create table artists (
   bandsintown_artist text,
   spotify_artist_id  text,
   wallet_pass_enabled boolean not null default false,
+  sms_enabled        boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
@@ -557,6 +558,23 @@ create table fan_follows (
 );
 alter table fan_follows enable row level security;
 create index if not exists fan_follows_artist_idx on fan_follows (artist_id);
+
+-- ─────────────────────────────────────────────
+-- SMS SUBSCRIBERS
+-- Fans who opted in (with consent) to an artist's SMS drop alerts
+-- ─────────────────────────────────────────────
+create table sms_subscribers (
+  id          uuid primary key default uuid_generate_v4(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  phone       text not null,
+  status      text not null default 'active' check (status in ('active', 'unsubscribed')),
+  source      text not null default 'page',
+  consent_at  timestamptz not null default now(),
+  created_at  timestamptz not null default now(),
+  unique (artist_id, phone)
+);
+alter table sms_subscribers enable row level security;
+create index if not exists sms_subscribers_phone_idx on sms_subscribers (phone);
 
 -- ─────────────────────────────────────────────
 -- updated_at triggers

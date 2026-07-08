@@ -11,6 +11,7 @@ import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
 import DropAlerts from './DropAlerts'
 import FollowButton from './FollowButton'
+import SmsSignup from './SmsSignup'
 import PixelScripts from '@/components/PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -207,6 +208,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
 
         {/* Drop alerts */}
         <DropAlerts slug={artist.slug} />
+
+        {/* SMS drop alerts (opt-in) */}
+        {artist.sms_enabled && (
+          <SmsSignup slug={artist.slug} artistName={artist.artist_name} radiusClass={radiusClass} />
+        )}
 
         {/* Pre-save campaigns */}
         {sectionVisible('presave') && presaves.length > 0 && (
