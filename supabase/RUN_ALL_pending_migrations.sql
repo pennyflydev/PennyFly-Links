@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- FlyLink — all pending migrations (0002 → 0010) in one block.
+-- FlyLink — all pending migrations (0002 → 0026) in one block.
 -- Paste the whole thing into the Supabase SQL editor and run once.
 -- Safe and idempotent: you can re-run it without harm.
 -- ════════════════════════════════════════════════════════════════════════
@@ -266,7 +266,10 @@ alter table fan_follows enable row level security;
 create index if not exists fan_follows_artist_idx on fan_follows (artist_id);
 
 -- ════════════════════════════════════════════════════════════════════════
--- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
--- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)
--- is now supported.
+-- Done. Every pending feature is now supported: pixels, labels/roles,
+-- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,
+-- Events, Referrals, link scheduling, media embeds, SEO/white-label,
+-- device analytics, appearance, product store, Shopify, web push, label
+-- branding/team/campaigns, memberships, follow-to-unlock, Superfan CRM,
+-- unified release campaigns, and fan accounts.
 -- ════════════════════════════════════════════════════════════════════════
