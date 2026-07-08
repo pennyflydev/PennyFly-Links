@@ -246,6 +246,11 @@ alter table exclusive_content enable row level security;  -- no public read: rew
 -- ── 0024 · Superfan CRM ─────────────────────────────────────────────────
 alter table subscribers add column if not exists is_superfan boolean not null default false;
 
+-- ── 0025 · Unified release campaigns ────────────────────────────────────
+-- Pre-save link auto-flips to a full streaming link on release day + notifies.
+alter table presave_campaigns add column if not exists smart_links jsonb not null default '[]'::jsonb;
+alter table presave_campaigns add column if not exists notified boolean not null default false;
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

@@ -1,8 +1,31 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
+import { fetchStreamingLinks } from '@/lib/odesli'
 import PresaveClient from './PresaveClient'
 import PixelScripts from '@/components/PixelScripts'
+
+type SmartLink = { platform: string; url: string }
+
+// Once a release is out, the pre-save link flips to a full multi-platform
+// streaming link. Resolve the DSP links from Odesli and cache them on the
+// campaign so we don't hit Odesli on every page load.
+async function resolveSmartLinks(campaign: {
+  id: string
+  spotify_url: string | null
+  smart_links: SmartLink[] | null
+}): Promise<SmartLink[]> {
+  if (campaign.smart_links && campaign.smart_links.length > 0) return campaign.smart_links
+  if (!campaign.spotify_url) return []
+
+  const result = await fetchStreamingLinks(campaign.spotify_url)
+  const links = result?.links ?? []
+  if (links.length > 0) {
+    const supabase = createAdminClient()
+    await supabase.from('presave_campaigns').update({ smart_links: links }).eq('id', campaign.id)
+  }
+  return links
+}
 
 async function getCampaign(slug: string) {
   const supabase = createAdminClient()
@@ -38,6 +61,10 @@ export default async function PresavePage({
   const campaign = await getCampaign(slug)
   if (!campaign) notFound()
 
+  // Flip to streaming links the moment the release date has passed.
+  const isReleased = new Date(campaign.release_date).getTime() <= Date.now()
+  const smartLinks = isReleased ? await resolveSmartLinks(campaign) : []
+
   return (
     <>
       <PixelScripts
@@ -59,6 +86,7 @@ export default async function PresavePage({
         saveCount={campaign.save_count}
         isActive={campaign.is_active}
         connected={connected === '1'}
+        smartLinks={smartLinks}
       />
     </>
   )

@@ -30,6 +30,13 @@ export default async function PreSavePage() {
         </Link>
       </div>
 
+      <div className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-400">
+        <span className="text-zinc-200 font-medium">One link, whole release cycle.</span>{' '}
+        Each campaign collects pre-saves before drop day, then automatically flips into a full
+        streaming link (Spotify, Apple, YouTube &amp; more) the moment it&apos;s out — and alerts
+        fans who opted in for drop notifications.
+      </div>
+
       <PresaveListClient initialCampaigns={campaigns} />
     </div>
   )

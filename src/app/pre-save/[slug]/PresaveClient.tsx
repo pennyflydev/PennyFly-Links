@@ -17,6 +17,29 @@ type Props = {
   saveCount: number
   isActive: boolean
   connected: boolean
+  smartLinks: { platform: string; url: string }[]
+}
+
+const PLATFORM_LABELS: Record<string, string> = {
+  spotify: 'Spotify',
+  apple_music: 'Apple Music',
+  youtube_music: 'YouTube Music',
+  tidal: 'Tidal',
+  amazon_music: 'Amazon Music',
+  deezer: 'Deezer',
+  bandcamp: 'Bandcamp',
+  soundcloud: 'SoundCloud',
+}
+
+const PLATFORM_COLORS: Record<string, string> = {
+  spotify: 'bg-[#1DB954] hover:bg-[#1ed760]',
+  apple_music: 'bg-[#fc3c44] hover:bg-[#ff4d55]',
+  youtube_music: 'bg-[#FF0000] hover:bg-[#ff1a1a]',
+  tidal: 'bg-zinc-700 hover:bg-zinc-600',
+  amazon_music: 'bg-[#00A8E1] hover:bg-[#00b8f5]',
+  deezer: 'bg-[#A238FF] hover:bg-[#b04dff]',
+  bandcamp: 'bg-[#1da0c3] hover:bg-[#22b3d9]',
+  soundcloud: 'bg-[#ff5500] hover:bg-[#ff6600]',
 }
 
 function getCountdown(target: Date) {
@@ -117,6 +140,34 @@ export default function PresaveClient(props: Props) {
                 Open in Spotify
               </a>
             )}
+          </div>
+        ) : isReleased && props.smartLinks.length > 0 ? (
+          // Released: the pre-save link has flipped into a full streaming link.
+          <div className="w-full flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-2">
+              {props.smartLinks.map((sl) => {
+                // Spotify still routes through our connector so we capture the
+                // fan's verified email and save the release to their library.
+                const isSpotify = sl.platform === 'spotify'
+                const href = isSpotify
+                  ? `/api/auth/spotify/start?type=presave&id=${props.campaignId}`
+                  : sl.url
+                return (
+                  <a
+                    key={sl.platform}
+                    href={href}
+                    target={isSpotify ? undefined : '_blank'}
+                    rel="noopener noreferrer"
+                    className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-white text-sm font-semibold transition-colors ${
+                      PLATFORM_COLORS[sl.platform] ?? 'bg-zinc-700 hover:bg-zinc-600'
+                    }`}
+                  >
+                    {PLATFORM_LABELS[sl.platform] ?? sl.platform}
+                  </a>
+                )
+              })}
+            </div>
+            <p className="text-xs text-zinc-600">Out now — listen on your platform of choice.</p>
           </div>
         ) : (
           <div className="w-full flex flex-col gap-3">

@@ -217,6 +217,8 @@ create table presave_campaigns (
   show_fan_count   boolean not null default true,
   is_active        boolean not null default true,
   save_count       integer not null default 0,
+  smart_links      jsonb not null default '[]'::jsonb,
+  notified         boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now(),
   unique (artist_id, slug)
