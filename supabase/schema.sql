@@ -12,7 +12,7 @@ create table profiles (
   id           uuid primary key default uuid_generate_v4(),
   clerk_id     text unique not null,
   email        text not null,
-  role         text not null default 'artist' check (role in ('admin', 'label', 'artist')),
+  role         text not null default 'artist' check (role in ('admin', 'label', 'artist', 'fan')),
   plan         text not null default 'starter' check (plan in ('signed', 'starter', 'pro', 'label', 'enterprise')),
   onboarded    boolean not null default false,
   stripe_customer_id    text,
@@ -536,6 +536,20 @@ create table spotify_presave_authorizations (
   unique (campaign_id, spotify_user_id)
 );
 alter table spotify_presave_authorizations enable row level security;
+
+-- ─────────────────────────────────────────────
+-- FAN FOLLOWS
+-- Fan accounts (profiles.role = 'fan') following artists
+-- ─────────────────────────────────────────────
+create table fan_follows (
+  id              uuid primary key default uuid_generate_v4(),
+  fan_profile_id  uuid not null references profiles(id) on delete cascade,
+  artist_id       uuid not null references artists(id) on delete cascade,
+  created_at      timestamptz not null default now(),
+  unique (fan_profile_id, artist_id)
+);
+alter table fan_follows enable row level security;
+create index if not exists fan_follows_artist_idx on fan_follows (artist_id);
 
 -- ─────────────────────────────────────────────
 -- updated_at triggers

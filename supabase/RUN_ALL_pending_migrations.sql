@@ -251,6 +251,20 @@ alter table subscribers add column if not exists is_superfan boolean not null de
 alter table presave_campaigns add column if not exists smart_links jsonb not null default '[]'::jsonb;
 alter table presave_campaigns add column if not exists notified boolean not null default false;
 
+-- ── 0026 · Fan accounts ─────────────────────────────────────────────────
+alter table profiles drop constraint if exists profiles_role_check;
+alter table profiles add constraint profiles_role_check check (role in ('admin', 'label', 'artist', 'fan'));
+
+create table if not exists fan_follows (
+  id              uuid primary key default gen_random_uuid(),
+  fan_profile_id  uuid not null references profiles(id) on delete cascade,
+  artist_id       uuid not null references artists(id) on delete cascade,
+  created_at      timestamptz not null default now(),
+  unique (fan_profile_id, artist_id)
+);
+alter table fan_follows enable row level security;
+create index if not exists fan_follows_artist_idx on fan_follows (artist_id);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

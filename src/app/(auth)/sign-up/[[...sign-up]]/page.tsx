@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { SignUp } from '@clerk/nextjs'
 
 export default function SignUpPage() {
@@ -9,6 +10,12 @@ export default function SignUpPage() {
           <p className="text-zinc-400 mt-1">Start your free 7-day trial</p>
         </div>
         <SignUp />
+        <p className="text-sm text-zinc-500">
+          Just here to follow artists?{' '}
+          <Link href="/fans/sign-up" className="text-yellow-400 hover:underline">
+            Create a fan account
+          </Link>
+        </p>
       </div>
     </div>
   )

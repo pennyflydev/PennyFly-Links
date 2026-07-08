@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist } from '@/lib/supabase/queries'
+import { getArtistBySlug, getPublishedLinksForArtist, getActivePresavesForArtist, getCurrentProfile } from '@/lib/supabase/queries'
 import { Music2, Globe, ExternalLink } from 'lucide-react'
 import type { Metadata } from 'next'
 import { toMediaEmbed, deviceFromUA, fontFamilyFor, buttonRadiusFor } from '@/lib/utils'
@@ -9,6 +9,7 @@ import { fetchShopifyProducts, formatShopifyPrice } from '@/lib/shopify/storefro
 import StreamingButtons from './StreamingButtons'
 import FanWall from './FanWall'
 import DropAlerts from './DropAlerts'
+import FollowButton from './FollowButton'
 import PixelScripts from '@/components/PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -76,6 +77,25 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
     .eq('is_active', true)
     .order('sort_order', { ascending: true })).data ?? []
 
+  // Follow state + follower count for the fan network.
+  const admin = createAdminClient()
+  const { count: followerCount } = await admin
+    .from('fan_follows')
+    .select('id', { count: 'exact', head: true })
+    .eq('artist_id', artist.id)
+
+  const viewerProfile = await getCurrentProfile()
+  let isFollowing = false
+  if (viewerProfile) {
+    const { data: existingFollow } = await admin
+      .from('fan_follows')
+      .select('id')
+      .eq('artist_id', artist.id)
+      .eq('fan_profile_id', viewerProfile.id)
+      .maybeSingle()
+    isFollowing = !!existingFollow
+  }
+
   // Active label-wide campaigns (cross-promo across the roster).
   const labelCampaigns = artist.label_id
     ? (await createAdminClient()
@@ -127,6 +147,14 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
                 })}
               </div>
             )}
+            {/* Follow (fan network) */}
+            <FollowButton
+              artistId={artist.id}
+              signedIn={!!viewerProfile}
+              initialFollowing={isFollowing}
+              initialCount={followerCount ?? 0}
+              radiusClass={radiusClass}
+            />
           </div>
         )}
 

@@ -38,6 +38,7 @@ export async function POST(req: Request) {
       email_addresses: { email_address: string }[]
       first_name?: string
       last_name?: string
+      unsafe_metadata?: { accountType?: string }
     }
 
     const clerkId = data.id
@@ -46,6 +47,15 @@ export async function POST(req: Request) {
     const lastName = data.last_name ?? ''
     const displayName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0]
     const isAdmin = clerkId === process.env.ADMIN_CLERK_USER_ID
+
+    // Fan signup (from /fans/sign-up): a listener account with no artist page.
+    // They just follow artists and get a personalized feed.
+    if (!isAdmin && data.unsafe_metadata?.accountType === 'fan') {
+      await supabase
+        .from('profiles')
+        .upsert({ clerk_id: clerkId, email, role: 'fan', plan: 'starter', onboarded: true }, { onConflict: 'clerk_id' })
+      return new Response('OK', { status: 200 })
+    }
 
     // Was this email invited to a label team? Then they join as a label member,
     // not an artist (no artist page created).
@@ -109,19 +119,19 @@ export async function POST(req: Request) {
       return new Response('Profile creation failed', { status: 500 })
     }
 
-    // Generate unique slug
+    // Generate unique slug. Reserved words are app routes that must never be
+    // shadowed by (or collide with) an artist page.
+    const RESERVED = new Set(['fans', 'dashboard', 'admin', 'roster', 'onboarding', 'pre-save', 'sign-in', 'sign-up', 'api', 'pricing', 'events', 'embed', 'r'])
     const baseSlug = slugify(email.split('@')[0]) || `artist-${clerkId.slice(-8)}`
     let slug = baseSlug
     let attempt = 0
 
-    while (attempt < 5) {
-      const { data: existing } = await supabase
-        .from('artists')
-        .select('id')
-        .eq('slug', slug)
-        .single()
+    while (attempt < 6) {
+      const taken =
+        RESERVED.has(slug) ||
+        !!(await supabase.from('artists').select('id').eq('slug', slug).single()).data
 
-      if (!existing) break
+      if (!taken) break
       attempt++
       slug = `${baseSlug}-${attempt}`
     }

@@ -11,6 +11,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const [profile, impersonation] = await Promise.all([getCurrentProfile(), getImpersonationContext()])
 
+  // Fan accounts have no artist dashboard — send them to their feed.
+  if (profile?.role === 'fan') redirect('/fans')
+
   // New signups who haven't chosen artist vs label go to onboarding first.
   if (profile && !profile.onboarded && profile.role !== 'admin') redirect('/onboarding')
 
