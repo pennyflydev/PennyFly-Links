@@ -196,6 +196,21 @@ create table if not exists label_member_invites (
 );
 alter table label_member_invites enable row level security;
 
+-- ── 0021 · Label campaigns ──────────────────────────────────────────────
+create table if not exists label_campaigns (
+  id         uuid primary key default gen_random_uuid(),
+  label_id   uuid not null references labels(id) on delete cascade,
+  title      text not null,
+  message    text default '',
+  url        text,
+  cover_url  text,
+  is_active  boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table label_campaigns enable row level security;
+drop policy if exists "Anyone can read active label campaigns" on label_campaigns;
+create policy "Anyone can read active label campaigns" on label_campaigns for select using (is_active = true);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)

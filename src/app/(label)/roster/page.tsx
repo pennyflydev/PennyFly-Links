@@ -8,6 +8,7 @@ import RoleControl from './RoleControl'
 import LabelSettings from './LabelSettings'
 import LabelActions from './LabelActions'
 import LabelTeam from './LabelTeam'
+import LabelCampaigns from './LabelCampaigns'
 
 type RosterArtist = {
   id: string
@@ -114,6 +115,8 @@ export default async function RosterPage() {
       )}
 
       {label && canManage && <LabelTeam />}
+
+      {label && canManage && <LabelCampaigns />}
 
       {(isAdmin || canManage) && <RosterInvite initialInvites={(invites ?? []) as Invite[]} />}
 

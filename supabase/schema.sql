@@ -63,6 +63,19 @@ create table label_member_invites (
 );
 alter table label_member_invites enable row level security;
 
+create table label_campaigns (
+  id         uuid primary key default uuid_generate_v4(),
+  label_id   uuid not null references labels(id) on delete cascade,
+  title      text not null,
+  message    text default '',
+  url        text,
+  cover_url  text,
+  is_active  boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table label_campaigns enable row level security;
+create policy "Anyone can read active label campaigns" on label_campaigns for select using (is_active = true);
+
 -- ─────────────────────────────────────────────
 -- ARTISTS
 -- Public-facing artist page config per profile

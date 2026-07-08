@@ -68,6 +68,16 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
     ? await fetchShopifyProducts(artist.shopify_domain, artist.shopify_token)
     : []
 
+  // Active label-wide campaigns (cross-promo across the roster).
+  const labelCampaigns = artist.label_id
+    ? (await createAdminClient()
+        .from('label_campaigns')
+        .select('id, title, message, url, cover_url')
+        .eq('label_id', artist.label_id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })).data ?? []
+    : []
+
   const socialIcons: Record<string, React.ElementType> = {
     website: Globe,
   }
@@ -109,6 +119,34 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Label campaigns */}
+        {labelCampaigns.length > 0 && (
+          <div className="w-full space-y-2">
+            {(labelCampaigns as { id: string; title: string; message: string; url: string | null; cover_url: string | null }[]).map((c) => {
+              const inner = (
+                <div className={`flex items-center gap-3 w-full bg-white/10 border border-yellow-400/30 ${radiusClass} p-3`}>
+                  {c.cover_url ? (
+                    <img src={c.cover_url} alt={c.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-yellow-400/15 flex items-center justify-center shrink-0"><Music2 className="w-5 h-5 text-yellow-400" /></div>
+                  )}
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-[10px] font-semibold text-yellow-400 uppercase tracking-wider">{artist.labels?.name ?? 'Featured'}</p>
+                    <p className="font-medium truncate">{c.title}</p>
+                    {c.message && <p className="text-xs text-white/60 truncate">{c.message}</p>}
+                  </div>
+                  {c.url && <ExternalLink className="w-4 h-4 text-white/40 shrink-0" />}
+                </div>
+              )
+              return c.url ? (
+                <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity">{inner}</a>
+              ) : (
+                <div key={c.id}>{inner}</div>
+              )
+            })}
           </div>
         )}
 
