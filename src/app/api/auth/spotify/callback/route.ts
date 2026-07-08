@@ -115,6 +115,21 @@ export async function GET(req: NextRequest) {
     const res = NextResponse.redirect(spotifyLink?.url ?? `${origin}/${artistRel.slug}/${link.slug}`)
     res.cookies.delete('sp_oauth_nonce')
     return res
+  } else if (state.t === 'unlock') {
+    // Follow-to-unlock: capture the email, then reveal the reward.
+    const { data: item } = await supabase
+      .from('exclusive_content')
+      .select('id, artist_id, reward_url, is_active')
+      .eq('id', state.id)
+      .single()
+
+    if (!item || !item.is_active) return fail()
+
+    await captureSubscriber(item.artist_id, 'email_capture', item.id)
+
+    const res = NextResponse.redirect(item.reward_url)
+    res.cookies.delete('sp_oauth_nonce')
+    return res
   }
 
   const res = NextResponse.redirect(`${origin}${redirectTo}`)

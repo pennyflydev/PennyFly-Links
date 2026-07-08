@@ -1,6 +1,7 @@
 import { getArtistForCurrentUser } from '@/lib/supabase/queries'
 import { createAdminClient } from '@/lib/supabase/server'
 import MembershipClient, { type Tier } from './MembershipClient'
+import ExclusiveClient from './ExclusiveClient'
 
 export default async function MembershipPage() {
   const artist = await getArtistForCurrentUser()
@@ -24,6 +25,7 @@ export default async function MembershipPage() {
         <p className="text-sm text-zinc-400 mt-1">Recurring support tiers with perks for your biggest fans</p>
       </div>
       <MembershipClient initialTiers={tiers} />
+      <ExclusiveClient />
     </div>
   )
 }

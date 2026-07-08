@@ -229,6 +229,20 @@ alter table membership_tiers enable row level security;
 drop policy if exists "Anyone can read active tiers" on membership_tiers;
 create policy "Anyone can read active tiers" on membership_tiers for select using (is_active = true);
 
+-- ── 0023 · Follow-to-unlock exclusive content ───────────────────────────
+create table if not exists exclusive_content (
+  id          uuid primary key default gen_random_uuid(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  title       text not null,
+  description text default '',
+  reward_url  text not null,
+  cover_url   text,
+  is_active   boolean not null default true,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+alter table exclusive_content enable row level security;  -- no public read: reward stays secret
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature (pixels, labels, onboarding, Spotify pre-save,
 -- billing, Playlist Spotlight, Fan Wall, Events, Referrals, link scheduling)
