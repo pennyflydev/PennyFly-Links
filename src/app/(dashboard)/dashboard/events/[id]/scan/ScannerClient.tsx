@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import jsQR from 'jsqr'
 import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, ScanLine, Loader2 } from 'lucide-react'
 
 type Result = {
@@ -19,6 +20,7 @@ type DetectorCtor = { new (opts: { formats: string[] }): Detector }
 export default function ScannerClient({ eventId, eventTitle }: { eventId: string; eventTitle: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [supported, setSupported] = useState<boolean | null>(null)
   const [scanning, setScanning] = useState(false)
   const [checking, setChecking] = useState(false)
@@ -48,14 +50,34 @@ export default function ScannerClient({ eventId, eventTitle }: { eventId: string
     streamRef.current = null
   }
 
+  // Decode the current video frame with jsQR (fallback for browsers without the
+  // native BarcodeDetector — notably iOS Safari). Returns the QR text or null.
+  function decodeFrame(video: HTMLVideoElement): string | null {
+    const w = video.videoWidth
+    const h = video.videoHeight
+    if (!w || !h) return null
+    // Cap the working resolution for speed on mobile; plenty for a QR code.
+    const scale = Math.min(1, 640 / Math.max(w, h))
+    const cw = Math.round(w * scale)
+    const ch = Math.round(h * scale)
+    const canvas = canvasRef.current ?? (canvasRef.current = document.createElement('canvas'))
+    canvas.width = cw
+    canvas.height = ch
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return null
+    ctx.drawImage(video, 0, 0, cw, ch)
+    const { data } = ctx.getImageData(0, 0, cw, ch)
+    const code = jsQR(data, cw, ch, { inversionAttempts: 'dontInvert' })
+    return code?.data ?? null
+  }
+
   async function startScan() {
     setResult(null)
-    const Ctor = (window as unknown as { BarcodeDetector?: DetectorCtor }).BarcodeDetector
-    if (!Ctor) {
+    // getUserMedia is required for any live scanning. Without it, manual only.
+    if (!navigator.mediaDevices?.getUserMedia) {
       setSupported(false)
       return
     }
-    setSupported(true)
     setScanning(true)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
@@ -64,13 +86,24 @@ export default function ScannerClient({ eventId, eventTitle }: { eventId: string
         videoRef.current.srcObject = stream
         await videoRef.current.play()
       }
-      const detector = new Ctor({ formats: ['qr_code'] })
+      setSupported(true)
+
+      // Prefer the native detector (fast, Chrome/Android); fall back to jsQR.
+      const Ctor = (window as unknown as { BarcodeDetector?: DetectorCtor }).BarcodeDetector
+      const detector = Ctor ? new Ctor({ formats: ['qr_code'] }) : null
+
       const tick = async () => {
         if (!streamRef.current || !videoRef.current) return
         try {
-          const codes = await detector.detect(videoRef.current)
-          if (codes[0]?.rawValue) {
-            await validate(codes[0].rawValue.trim())
+          let value: string | null = null
+          if (detector) {
+            const codes = await detector.detect(videoRef.current)
+            value = codes[0]?.rawValue ?? null
+          } else {
+            value = decodeFrame(videoRef.current)
+          }
+          if (value) {
+            await validate(value.trim())
             return
           }
         } catch {
@@ -150,7 +183,7 @@ export default function ScannerClient({ eventId, eventTitle }: { eventId: string
 
       {supported === false && (
         <p className="text-xs text-amber-400 mb-4">
-          Live camera scanning isn&apos;t supported in this browser (try Chrome on Android). Use manual entry below.
+          Couldn&apos;t access the camera — check camera permissions for this site, or use manual entry below.
         </p>
       )}
 

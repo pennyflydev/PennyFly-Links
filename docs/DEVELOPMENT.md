@@ -111,7 +111,7 @@ This project has a hard rule, reflected throughout: **don't overclaim.** If an A
 
 - Spotify's public API **cannot** return stream counts / monthly listeners → the insights panel shows followers/popularity/top-tracks and says so.
 - **Apple Wallet** passes need an Apple Developer cert → deferred, and the UI says why.
-- **iOS Safari** lacks `BarcodeDetector` → the door scanner falls back to manual entry and tells the user.
+- **iOS Safari** lacks the native `BarcodeDetector` → the door scanner uses a `jsQR` canvas-decode fallback so iPhone camera scanning works; the manual-entry field remains for when the camera is unavailable or permission is denied.
 
 When you hit a similar wall, surface it; don't paper over it.
 
