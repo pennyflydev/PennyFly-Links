@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     await supabase.from('artists').delete().eq('profile_id', profile.id)
     await supabase.from('profiles').update({ role: 'label', plan: 'label', onboarded: true }).eq('id', profile.id)
 
-    return NextResponse.json({ ok: true, redirect: '/roster' })
+    return NextResponse.json({ ok: true, redirect: '/label' })
   }
 
   // Default: stay an artist.

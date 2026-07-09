@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { createClient } from './server'
 import { createAdminClient } from './server'
 import { isLinkLive } from '@/lib/utils'
+import { limitsForPlan } from '@/lib/stripe'
 
 export const IMPERSONATE_COOKIE = 'impersonate_artist_id'
 
@@ -40,6 +41,30 @@ export async function getLabelForUser(profileId: string) {
     return { label: mem.data.labels as unknown as { id: string; name: string; logo_url: string | null; accent_color: string | null }, memberRole: mem.data.member_role as string }
   }
   return null
+}
+
+// Artist-seat usage for a label: how many roster seats are taken (current
+// artists + pending, unexpired invites) and the plan's seat limit. A seat is
+// "used" the moment an invite is sent, so a label can't over-invite past its cap.
+export async function getLabelSeatInfo(labelId: string): Promise<{ used: number; limit: number }> {
+  const supabase = createAdminClient()
+  const { data: lbl } = await supabase.from('labels').select('owner_profile_id').eq('id', labelId).maybeSingle()
+  let plan = 'label'
+  if (lbl?.owner_profile_id) {
+    const { data: owner } = await supabase.from('profiles').select('plan').eq('id', lbl.owner_profile_id).maybeSingle()
+    if (owner?.plan) plan = owner.plan
+  }
+  const limit = limitsForPlan(plan).artistSeats
+  const [{ count: artists }, { count: invites }] = await Promise.all([
+    supabase.from('artists').select('id', { count: 'exact', head: true }).eq('label_id', labelId),
+    supabase
+      .from('artist_invites')
+      .select('id', { count: 'exact', head: true })
+      .eq('label_id', labelId)
+      .is('claimed_at', null)
+      .gt('expires_at', new Date().toISOString()),
+  ])
+  return { used: (artists ?? 0) + (invites ?? 0), limit }
 }
 
 // Can this profile view/manage the given artist? Admins can manage anyone;

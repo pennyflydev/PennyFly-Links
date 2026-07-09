@@ -12,13 +12,26 @@ export type Invite = {
   created_at: string
 }
 
-export default function RosterInvite({ initialInvites }: { initialInvites: Invite[] }) {
+export default function RosterInvite({
+  initialInvites,
+  seatsUsed,
+  seatLimit,
+}: {
+  initialInvites: Invite[]
+  seatsUsed?: number
+  seatLimit?: number
+}) {
   const [invites, setInvites] = useState(initialInvites.filter((i) => !i.claimed_at))
+  const [used, setUsed] = useState(seatsUsed ?? 0)
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+
+  // seatLimit is only passed for labels (admins are unlimited → undefined).
+  const capped = typeof seatLimit === 'number' && Number.isFinite(seatLimit)
+  const atCap = capped && used >= (seatLimit as number)
 
   async function invite() {
     setBusy(true)
@@ -32,6 +45,7 @@ export default function RosterInvite({ initialInvites }: { initialInvites: Invit
       const data = await res.json()
       if (res.ok) {
         setInvites((prev) => [data.invite, ...prev])
+        setUsed((u) => u + 1)
         setEmail('')
         setOpen(false)
       } else {
@@ -54,16 +68,24 @@ export default function RosterInvite({ initialInvites }: { initialInvites: Invit
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-white">Invite Artists</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Invited artists become signed (free) accounts when they sign up with that email.</p>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Invited artists become signed (free) accounts when they sign up with that email.
+            {capped && <span className="text-zinc-400"> · {used} of {seatLimit} seats used</span>}
+          </p>
         </div>
         <button
-          onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 transition-colors"
+          onClick={() => !atCap && setOpen((o) => !o)}
+          disabled={atCap}
+          title={atCap ? 'Seat limit reached — upgrade to add more' : undefined}
+          className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded-lg text-sm font-semibold hover:bg-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <Plus className="w-4 h-4" />
           Invite Artist
         </button>
       </div>
+      {atCap && (
+        <p className="text-xs text-yellow-400/90 mt-2">You&apos;ve used all {seatLimit} artist seats on your plan. Upgrade to add more.</p>
+      )}
 
       {open && (
         <div className="mt-4 flex items-center gap-2">

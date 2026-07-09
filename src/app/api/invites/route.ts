@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
+import { getCurrentProfile, getLabelForUser, getLabelSeatInfo } from '@/lib/supabase/queries'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -39,6 +39,17 @@ export async function POST(req: NextRequest) {
   const { email } = await req.json()
   if (!email || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: 'A valid email is required' }, { status: 400 })
+  }
+
+  // Enforce the plan's artist-seat limit (labels only; admins are unlimited).
+  if (ctx.labelId) {
+    const { used, limit } = await getLabelSeatInfo(ctx.labelId)
+    if (used >= limit) {
+      return NextResponse.json(
+        { error: `You've used all ${limit} artist seats on your plan. Upgrade to add more.`, code: 'seat_limit' },
+        { status: 403 }
+      )
+    }
   }
 
   const supabase = createAdminClient()

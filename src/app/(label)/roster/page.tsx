@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Radio, Users, TrendingUp } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
-import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
+import { getCurrentProfile, getLabelForUser, getLabelSeatInfo } from '@/lib/supabase/queries'
 import RosterInvite, { type Invite } from './RosterInvite'
 import ActAsButton from './ActAsButton'
 import RoleControl from './RoleControl'
@@ -89,6 +89,9 @@ export default async function RosterPage() {
   if (!isAdmin) invitesQuery = invitesQuery.eq('label_id', labelId)
   const { data: invites } = await invitesQuery
 
+  // Seat usage (labels only; admins are unlimited).
+  const seatInfo = labelId ? await getLabelSeatInfo(labelId) : null
+
   const stats = [
     { label: 'Artists', value: roster.length, icon: Users },
     { label: 'Total Fans', value: fansCount, icon: Users },
@@ -118,7 +121,13 @@ export default async function RosterPage() {
 
       {label && canManage && <LabelCampaigns />}
 
-      {(isAdmin || canManage) && <RosterInvite initialInvites={(invites ?? []) as Invite[]} />}
+      {(isAdmin || canManage) && (
+        <RosterInvite
+          initialInvites={(invites ?? []) as Invite[]}
+          seatsUsed={seatInfo?.used}
+          seatLimit={seatInfo?.limit}
+        />
+      )}
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {stats.map(({ label: l, value, icon: Icon }) => (
