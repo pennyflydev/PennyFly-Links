@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { Calendar, MapPin, Ticket, CheckCircle2, Music2 } from 'lucide-react'
+import { Calendar, MapPin, Ticket, CheckCircle2, Music2, Wallet } from 'lucide-react'
 
 export default function TicketView({
   token,
@@ -14,6 +14,7 @@ export default function TicketView({
   venue,
   city,
   ticketType,
+  walletUrl,
 }: {
   token: string
   buyerName: string | null
@@ -24,6 +25,7 @@ export default function TicketView({
   venue: string | null
   city: string | null
   ticketType: string
+  walletUrl: string | null
 }) {
   const [qr, setQr] = useState<string | null>(null)
   const used = status === 'used'
@@ -84,6 +86,16 @@ export default function TicketView({
               <p className="text-xs text-zinc-500 flex items-center gap-1.5">
                 <Ticket className="w-3.5 h-3.5" /> Show this at the door — single use
               </p>
+              {walletUrl && (
+                <a
+                  href={walletUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-black rounded-full text-sm font-semibold hover:bg-white/90 transition-colors"
+                >
+                  <Wallet className="w-4 h-4" /> Add to Google Wallet
+                </a>
+              )}
             </>
           ) : (
             <div className="w-56 h-56 rounded-xl bg-zinc-800 animate-pulse" />
