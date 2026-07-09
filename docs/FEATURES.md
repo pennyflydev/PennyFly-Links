@@ -28,6 +28,7 @@ Every route and API in the app, plus a feature catalog with activation state. Se
 | **Payments / Stripe Connect** | `/dashboard/payments` | 0031 | ⚙️ inert until Stripe+Connect |
 | SaaS billing (plans) | `/dashboard/settings` → Billing | 0006 | ⚙️ inert until Stripe |
 | Label roster, team, campaigns, broadcast | `/roster`, `/admin` | 0003, 0019-0021 | ✅ live |
+| **Label HQ** — dedicated label dashboard + roster-wide revenue (tickets/tips/store/unlocks per artist) | `/label` | — | ✅ live (label/admin only; gross figures) |
 | Impersonation ("Act as") | roster | — | ✅ live |
 
 Legend: ✅ live · ⚙️ built but inert until an account/env is configured.
@@ -39,7 +40,7 @@ Route groups in `()` add no URL segment. `[[...x]]` are Clerk catch-alls.
 **Public:** `/` · `/pricing` · `/[slug]` (artist page) · `/[slug]/[linkSlug]` (release) · `/embed/[slug]/[linkSlug]` (iframe) · `/events/[slug]` · `/pre-save/[slug]` · `/ticket/[token]` · `/ticket/success` · `/sign-in` · `/sign-up` · `/fans/sign-up`
 **Fan (authed):** `/fans` (own layout + guard)
 **Artist (Clerk-gated):** `/onboarding` · `/dashboard` + `/dashboard/{overview,artist-page,links,links/create,links/[id]/edit,analytics,pre-save,pre-save/create,pre-save/[id]/edit,events,events/create,events/[id]/edit,events/[id]/tickets,events/[id]/scan,store,store/create,store/[id]/edit,membership,tips,payments,subscribers,sms,fan-wall,settings,refer}`
-**Label/admin:** `/admin` · `/roster` · `/roster/[artistId]`
+**Label/admin:** `/label` (Label HQ — label accounts land here) · `/admin` · `/roster` · `/roster/[artistId]`
 **Handler:** `/r/[code]` (referral redirect)
 
 ## API routes

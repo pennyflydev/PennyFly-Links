@@ -21,6 +21,7 @@ import {
   Heart,
   Smartphone,
   CreditCard,
+  TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -104,6 +105,20 @@ export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?
           >
             <BarChart3 className="w-4 h-4 shrink-0" />
             Platform
+          </Link>
+        )}
+        {(isAdmin || isLabel) && (
+          <Link
+            href="/label"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
+              pathname === '/label'
+                ? 'bg-yellow-400/10 text-yellow-400'
+                : 'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
+            )}
+          >
+            <TrendingUp className="w-4 h-4 shrink-0" />
+            Label HQ
           </Link>
         )}
         {(isAdmin || isLabel) && (

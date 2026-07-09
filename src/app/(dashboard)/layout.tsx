@@ -17,8 +17,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // New signups who haven't chosen artist vs label go to onboarding first.
   if (profile && !profile.onboarded && profile.role !== 'admin') redirect('/onboarding')
 
-  // Label accounts don't have an artist dashboard — send them to their roster.
-  if (profile?.role === 'label' && !impersonation) redirect('/roster')
+  // Label accounts don't have an artist dashboard — send them to their Label HQ.
+  if (profile?.role === 'label' && !impersonation) redirect('/label')
 
   const isAdmin = profile?.role === 'admin'
   const isLabel = profile?.role === 'label'
