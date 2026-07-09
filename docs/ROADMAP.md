@@ -25,7 +25,7 @@ Recommended order for what's left:
 The Connect foundation is in (`src/lib/stripe/connect.ts`, `/dashboard/payments`, native store checkout). These build on it and were parked when ticketing was prioritized. Each needs a `checkout.session.completed` branch in the Stripe webhook:
 
 - ✅ **Tips / tip jar** — shipped (migration 0033). `kind='tip'` checkout, `tips` table, public `TipJar` widget on the artist page (gated on `tips_enabled` + `stripe_charges_enabled`), `/dashboard/tips` (enable + received-tips list). Inert until Stripe/Connect are live.
-- **Paid unlocks** — pay to unlock a track (vs the current Spotify-follow gate)
+- ✅ **Paid unlocks** — shipped (migration 0035). `exclusive_content.price_cents > 0` makes an unlock pay-to-reveal (0 keeps the Spotify-follow gate); `kind='paid_unlock'` checkout, `unlocks` table, reward revealed on `/unlock/success` after payment + emailed. Inert until Stripe/Connect live.
 - **Native recurring memberships** — memberships currently use external `join_url`; make them real Connect subscriptions ("your cut")
 - **Label revenue splits** — split one charge between label + artist (multi-party; the complex one — build **last**)
 

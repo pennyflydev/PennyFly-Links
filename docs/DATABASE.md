@@ -7,7 +7,7 @@ Postgres on Supabase. **`supabase/schema.sql` is the consolidated source of trut
 Every table has **RLS enabled**. But because auth is Clerk (not Supabase), server code uses the **service-role admin client, which bypasses RLS** — access is enforced in app code by scoping queries to the current artist/label. RLS only governs the **public anon path** (the public artist page). So:
 
 - **Public-read tables** carry a `for select using (is_published/is_active/true)` policy → visible to anon.
-- **Private tables** (subscribers, `sms_subscribers`, `tickets`, `tips`, `purchases`, `spotify_presave_authorizations`, `email_integrations`, `fan_follows`, `referrals`, label tables, `push_subscriptions`) have RLS enabled with **no** public policy → only the admin client can read them.
+- **Private tables** (subscribers, `sms_subscribers`, `tickets`, `tips`, `purchases`, `unlocks`, `spotify_presave_authorizations`, `email_integrations`, `fan_follows`, `referrals`, label tables, `push_subscriptions`) have RLS enabled with **no** public policy → only the admin client can read them.
 - **`exclusive_content`** deliberately has no public read policy so `reward_url` stays secret.
 
 ## Tables
@@ -54,7 +54,8 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 |---|---|---|---|
 | **products** | digital store | `artist_id`, `title`, `price_cents`, `buy_url`, `is_published`, `sort_order` | public read of published; owner all |
 | **membership_tiers** | paid fan memberships | `artist_id`, `name`, `price_cents`, `interval` (month/year), `perks` (text[]), `join_url`, `is_active` | public read of active; owner manage |
-| **exclusive_content** | follow-to-unlock rewards | `artist_id`, `title`, `reward_url` (secret), `is_active` | **no public read** (reward hidden) |
+| **exclusive_content** | unlock rewards (follow-gate or paid) | `artist_id`, `title`, `reward_url` (secret), `price_cents` (0 = Spotify-follow, >0 = paid), `is_active` | **no public read** (reward hidden) |
+| **unlocks** | who paid to unlock a paid exclusive | `exclusive_id`, `artist_id`, `amount_cents`, `buyer_name`, `buyer_email`, `order_id` (uniq = Stripe session); idx(artist), idx(order) | admin/service-role only |
 | **label_campaigns** | cross-roster promo cards | `label_id`, `title`, `message`, `url`, `is_active` | public read of active |
 | **events** | gig/launch landing pages | `artist_id`, `slug` (uniq), `start_at`, `venue`, `city`, `ticket_url`, `is_published`, `source` (manual/bandsintown), `external_id`; partial uniq(artist,external_id) | public read of published; owner all |
 | **ticket_types** | ticket tiers for an event | `event_id`, `artist_id`, `name`, `price_cents`, `quantity` (null=∞), `sold`, `is_active`, `sort_order` | public read of active; owner via service role |
@@ -62,7 +63,7 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 | **tips** | one-off fan tips via Connect | `artist_id`, `amount_cents`, `supporter_name`, `message`, `order_id` (uniq = Stripe session); idx(artist) | admin/service-role only |
 | **purchases** | completed store product sales via Connect | `artist_id`, `product_id`, `amount_cents`, `buyer_name`, `buyer_email`, `order_id` (uniq = Stripe session); idx(artist) | admin/service-role only |
 
-## Migrations (0002 → 0034)
+## Migrations (0002 → 0035)
 
 `RUN_ALL_pending_migrations.sql` combines all of these idempotently — run it once to upgrade an existing DB. It covers **0002 → 0032**.
 
@@ -101,5 +102,6 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 | 0032 | `ticket_types`, `tickets` |
 | 0033 | `artists.tips_enabled`; `tips` |
 | 0034 | `purchases` |
+| 0035 | `exclusive_content.price_cents`; `unlocks` |
 
-> **Next migration = 0035.** Add the file, append to `RUN_ALL_pending_migrations.sql`, and mirror into `schema.sql`.
+> **Next migration = 0036.** Add the file, append to `RUN_ALL_pending_migrations.sql`, and mirror into `schema.sql`.

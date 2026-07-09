@@ -14,7 +14,8 @@ Every route and API in the app, plus a feature catalog with activation state. Se
 | Events + Bandsintown import | `/dashboard/events`, `/events/[slug]` | 0009, 0027 | ✅ live |
 | **Ticketing** (types, QR ticket, scanner, reporting, emailed delivery) | `/dashboard/events/[id]/tickets` + `/scan`, `/ticket/[token]` | 0032 | ✅ free live; paid needs Connect; email needs Resend |
 | Store (digital products) | `/dashboard/store`, public Store section | 0016, 0034 | ✅ live; native checkout needs Connect — sales recorded in `purchases` + buyer receipt emailed |
-| Memberships + follow-to-unlock exclusives | `/dashboard/membership` | 0022, 0023 | ✅ live (external links; native = Connect) |
+| Memberships + follow-to-unlock exclusives | `/dashboard/membership` | 0022, 0023 | ✅ live (memberships external links; native = Connect) |
+| Paid unlocks (pay to reveal exclusive) | `/dashboard/membership`, `/unlock/success` | 0035 | ✅ built; needs Connect payouts live |
 | Tip jar (one-off fan tips via Connect) | `/dashboard/tips`, public Support section | 0033 | ✅ built; needs Connect payouts live |
 | Shopify merch | Store section | 0017 | ✅ per-artist |
 | Playlists, media embeds, fan wall, custom links | artist page editor | 0007, 0012, 0008 | ✅ live |
@@ -64,7 +65,7 @@ Auth: **Artist** = `auth()` + `getArtistForCurrentUser`; **Profile** = `getCurre
 `/api/sms/broadcast` POST (Artist) · `/api/sms/subscribe` POST (Public) · `/api/sms/webhook` POST (Twilio) · `/api/push/send` POST (Artist) · `/api/push/subscribe` POST (Public)
 
 ### Billing & Connect
-`/api/billing/checkout` POST (Profile) · `/api/billing/portal` POST · `/api/connect/onboard` POST · `/api/connect/login` POST (Artist) · `/api/connect/checkout` POST (Public) — `kind`: `product` · `tip`
+`/api/billing/checkout` POST (Profile) · `/api/billing/portal` POST · `/api/connect/onboard` POST · `/api/connect/login` POST (Artist) · `/api/connect/checkout` POST (Public) — `kind`: `product` · `tip` · `paid_unlock`
 
 ### Imports & meta
 `/api/import/spotify` GET · `/api/import/linktree` GET · `/api/import/bandsintown` POST · `/api/odesli` GET (Public) · `/api/upload` POST

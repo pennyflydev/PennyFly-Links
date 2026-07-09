@@ -463,9 +463,11 @@ create table exclusive_content (
   cover_url   text,
   is_active   boolean not null default true,
   sort_order  integer not null default 0,
+  price_cents integer not null default 0,   -- 0 = Spotify-follow gate; > 0 = paid unlock
   created_at  timestamptz not null default now()
 );
 -- RLS on, no public read policy: only the service role sees reward_url.
+-- price_cents > 0 makes this a paid unlock (pay to reveal); 0 = Spotify-follow gate.
 alter table exclusive_content enable row level security;
 
 -- ─────────────────────────────────────────────
@@ -700,6 +702,24 @@ create table purchases (
 );
 alter table purchases enable row level security;
 create index if not exists purchases_artist_idx on purchases (artist_id);
+
+-- ─────────────────────────────────────────────
+-- UNLOCKS
+-- Records who paid to unlock a paid exclusive; used to reveal + receipt
+-- ─────────────────────────────────────────────
+create table unlocks (
+  id           uuid primary key default uuid_generate_v4(),
+  exclusive_id uuid references exclusive_content(id) on delete set null,
+  artist_id    uuid not null references artists(id) on delete cascade,
+  amount_cents integer not null,
+  buyer_name   text,
+  buyer_email  text,
+  order_id     text unique,
+  created_at   timestamptz not null default now()
+);
+alter table unlocks enable row level security;
+create index if not exists unlocks_artist_idx on unlocks (artist_id);
+create index if not exists unlocks_order_idx on unlocks (order_id);
 
 -- ─────────────────────────────────────────────
 -- updated_at triggers

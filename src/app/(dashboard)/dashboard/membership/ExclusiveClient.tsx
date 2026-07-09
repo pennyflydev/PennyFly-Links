@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Lock, Trash2, Loader2, Plus } from 'lucide-react'
 
-type Item = { id: string; title: string; description: string; reward_url: string; cover_url: string | null; is_active: boolean }
+type Item = { id: string; title: string; description: string; reward_url: string; cover_url: string | null; is_active: boolean; price_cents: number }
 
 export default function ExclusiveClient() {
   const [items, setItems] = useState<Item[]>([])
@@ -12,6 +12,7 @@ export default function ExclusiveClient() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [rewardUrl, setRewardUrl] = useState('')
+  const [price, setPrice] = useState('')
   const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
@@ -34,10 +35,10 @@ export default function ExclusiveClient() {
     setBusy('new')
     const res = await fetch('/api/exclusive', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, rewardUrl, coverUrl }),
+      body: JSON.stringify({ title, description, rewardUrl, coverUrl, priceCents: Math.round((parseFloat(price) || 0) * 100) }),
     })
     const data = await res.json()
-    if (res.ok) { setItems((p) => [...p, data.item]); setTitle(''); setDescription(''); setRewardUrl(''); setCoverUrl(null); setOpen(false) }
+    if (res.ok) { setItems((p) => [...p, data.item]); setTitle(''); setDescription(''); setRewardUrl(''); setPrice(''); setCoverUrl(null); setOpen(false) }
     setBusy(null)
   }
 
@@ -60,8 +61,8 @@ export default function ExclusiveClient() {
     <div className="mt-10">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2"><Lock className="w-4 h-4 text-zinc-400" /> Follow-to-unlock</h2>
-          <p className="text-sm text-zinc-400 mt-0.5">Gate a download or secret track behind a Spotify connect — you get their verified email.</p>
+          <h2 className="text-lg font-bold text-white flex items-center gap-2"><Lock className="w-4 h-4 text-zinc-400" /> Unlocks</h2>
+          <p className="text-sm text-zinc-400 mt-0.5">Gate a download or secret track. Leave the price at $0 for a Spotify-follow unlock (you get their verified email), or set a price to sell it (needs payments set up).</p>
         </div>
         <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:border-zinc-500 transition-colors">
           <Plus className="w-4 h-4" />New unlock
@@ -74,8 +75,13 @@ export default function ExclusiveClient() {
             className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500" />
           <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short teaser (optional)"
             className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500" />
-          <input value={rewardUrl} onChange={(e) => setRewardUrl(e.target.value)} placeholder="Reward link (revealed after they connect) — Dropbox, Drive, etc."
+          <input value={rewardUrl} onChange={(e) => setRewardUrl(e.target.value)} placeholder="Reward link (revealed after unlock) — Dropbox, Drive, etc."
             className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-zinc-400">$</span>
+            <input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00 = free (Spotify follow)"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500" />
+          </div>
           <div className="flex items-center gap-3">
             {coverUrl ? <img src={coverUrl} alt="" className="w-12 h-12 rounded-lg object-cover border border-zinc-700" /> : <div className="w-12 h-12 rounded-lg bg-zinc-800 border border-zinc-700" />}
             <label className="px-3 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-xs font-medium hover:border-zinc-500 transition-colors cursor-pointer flex items-center gap-2">
@@ -98,6 +104,7 @@ export default function ExclusiveClient() {
             <div key={it.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-white truncate font-medium">{it.title}</span>
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300">{it.price_cents > 0 ? `$${(it.price_cents / 100).toFixed(2)}` : 'Free'}</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${it.is_active ? 'bg-green-500/20 text-green-400' : 'bg-zinc-700 text-zinc-400'}`}>{it.is_active ? 'Live' : 'Off'}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">

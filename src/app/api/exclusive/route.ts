@@ -27,13 +27,15 @@ export async function POST(req: NextRequest) {
   const artist = await getArtistForCurrentUser()
   if (!artist) return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
 
-  const { title, description, rewardUrl, coverUrl } = await req.json()
+  const { title, description, rewardUrl, coverUrl, priceCents } = await req.json()
   if (!title || !rewardUrl) return NextResponse.json({ error: 'Title and reward link required' }, { status: 400 })
+
+  const price = Math.max(0, Math.round(Number(priceCents) || 0))
 
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('exclusive_content')
-    .insert({ artist_id: artist.id, title, description: description ?? '', reward_url: rewardUrl, cover_url: coverUrl ?? null, is_active: true })
+    .insert({ artist_id: artist.id, title, description: description ?? '', reward_url: rewardUrl, cover_url: coverUrl ?? null, price_cents: price, is_active: true })
     .select()
     .single()
 

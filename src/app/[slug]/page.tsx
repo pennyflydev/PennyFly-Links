@@ -14,6 +14,7 @@ import FollowButton from './FollowButton'
 import SmsSignup from './SmsSignup'
 import TipJar from './TipJar'
 import BuyButton from './BuyButton'
+import PaidUnlockButton from './PaidUnlockButton'
 import PixelScripts from '@/components/PixelScripts'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -76,7 +77,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
   // Follow-to-unlock exclusives (reward_url is NEVER selected here — stays secret).
   const exclusives = (await createAdminClient()
     .from('exclusive_content')
-    .select('id, title, description, cover_url, sort_order')
+    .select('id, title, description, cover_url, price_cents, sort_order')
     .eq('artist_id', artist.id)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })).data ?? []
@@ -309,25 +310,37 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           </div>
         )}
 
-        {/* Follow-to-unlock exclusives */}
+        {/* Unlock: paid (pay to reveal) or free (Spotify-follow gate) */}
         {exclusives.length > 0 && (
           <div className="w-full space-y-2">
             <p className="text-xs font-medium text-white/50 uppercase tracking-wider px-1">Unlock</p>
-            {(exclusives as { id: string; title: string; description: string; cover_url: string | null }[]).map((ex) => (
-              <a key={ex.id} href={`/api/auth/spotify/start?type=unlock&id=${ex.id}`}
-                className={`flex items-center gap-3 w-full bg-white/10 border border-white/20 ${radiusClass} p-3 hover:bg-white/15 transition-colors`}>
-                {ex.cover_url ? (
-                  <img src={ex.cover_url} alt={ex.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center shrink-0"><Music2 className="w-5 h-5 text-white/40" /></div>
-                )}
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="font-medium truncate">{ex.title}</p>
-                  <p className="text-xs text-white/60">{ex.description || 'Connect Spotify to unlock'}</p>
-                </div>
-                <span className="text-xs font-semibold text-black bg-[#1DB954] rounded-full px-3 py-1.5 shrink-0">Unlock</span>
-              </a>
-            ))}
+            {(exclusives as { id: string; title: string; description: string; cover_url: string | null; price_cents: number }[]).map((ex) => {
+              const paid = ex.price_cents > 0 && !!artist.stripe_charges_enabled
+              const inner = (
+                <>
+                  {ex.cover_url ? (
+                    <img src={ex.cover_url} alt={ex.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center shrink-0"><Music2 className="w-5 h-5 text-white/40" /></div>
+                  )}
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="font-medium truncate">{ex.title}</p>
+                    <p className="text-xs text-white/60">{ex.description || (paid ? 'Pay to unlock' : 'Connect Spotify to unlock')}</p>
+                  </div>
+                </>
+              )
+              return paid ? (
+                <PaidUnlockButton key={ex.id} exclusiveId={ex.id} priceCents={ex.price_cents} radiusClass={radiusClass}>
+                  {inner}
+                </PaidUnlockButton>
+              ) : (
+                <a key={ex.id} href={`/api/auth/spotify/start?type=unlock&id=${ex.id}`}
+                  className={`flex items-center gap-3 w-full bg-white/10 border border-white/20 ${radiusClass} p-3 hover:bg-white/15 transition-colors`}>
+                  {inner}
+                  <span className="text-xs font-semibold text-black bg-[#1DB954] rounded-full px-3 py-1.5 shrink-0">Unlock</span>
+                </a>
+              )
+            })}
           </div>
         )}
 

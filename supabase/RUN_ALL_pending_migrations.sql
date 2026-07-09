@@ -360,6 +360,22 @@ create table if not exists purchases (
 alter table purchases enable row level security;
 create index if not exists purchases_artist_idx on purchases (artist_id);
 
+-- ── 0035 · Paid unlocks ─────────────────────────────────────────────────
+alter table exclusive_content add column if not exists price_cents integer not null default 0;
+create table if not exists unlocks (
+  id           uuid primary key default gen_random_uuid(),
+  exclusive_id uuid references exclusive_content(id) on delete set null,
+  artist_id    uuid not null references artists(id) on delete cascade,
+  amount_cents integer not null,
+  buyer_name   text,
+  buyer_email  text,
+  order_id     text unique,
+  created_at   timestamptz not null default now()
+);
+alter table unlocks enable row level security;
+create index if not exists unlocks_artist_idx on unlocks (artist_id);
+create index if not exists unlocks_order_idx on unlocks (order_id);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,

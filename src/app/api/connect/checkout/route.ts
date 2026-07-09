@@ -53,6 +53,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url })
   }
 
+  if (kind === 'paid_unlock') {
+    const { data: item } = await supabase
+      .from('exclusive_content')
+      .select('id, title, price_cents, is_active, artist_id')
+      .eq('id', id)
+      .single()
+    if (!item || !item.is_active) return NextResponse.json({ error: 'Not available' }, { status: 404 })
+    if (item.price_cents <= 0) return NextResponse.json({ error: 'This unlock is free.' }, { status: 400 })
+
+    const { data: artist } = await supabase
+      .from('artists')
+      .select('slug, stripe_account_id, stripe_charges_enabled')
+      .eq('id', item.artist_id)
+      .single()
+    if (!artist?.stripe_account_id || !artist.stripe_charges_enabled) {
+      return NextResponse.json({ error: 'This artist isn’t set up to take payments yet.' }, { status: 400 })
+    }
+
+    const url = await createConnectCheckout({
+      destinationAccountId: artist.stripe_account_id,
+      amountCents: item.price_cents,
+      productName: item.title,
+      metadata: { kind: 'paid_unlock', exclusiveId: item.id, artistId: item.artist_id },
+      successUrl: `${origin}/unlock/success?s={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${origin}/${artist.slug}?unlock=cancelled`,
+    })
+    if (!url) return NextResponse.json({ error: 'Could not start checkout.' }, { status: 500 })
+    return NextResponse.json({ url })
+  }
+
   if (kind === 'product') {
     const { data: product } = await supabase
       .from('products')

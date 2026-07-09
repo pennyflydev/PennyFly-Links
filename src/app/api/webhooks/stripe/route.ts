@@ -93,6 +93,37 @@ export async function POST(req: NextRequest) {
             artistName: artist?.artist_name ?? 'the artist',
           }).catch(() => {})
         }
+      } else if (session.metadata?.kind === 'paid_unlock') {
+        // Record the paid unlock (idempotent) and email the reward link.
+        const m = session.metadata
+        const { data: existing } = await supabase.from('unlocks').select('id').eq('order_id', session.id).maybeSingle()
+        if (!existing) {
+          const buyerEmail = session.customer_details?.email ?? null
+          const buyerName = session.customer_details?.name ?? null
+          await supabase.from('unlocks').insert({
+            exclusive_id: m.exclusiveId,
+            artist_id: m.artistId,
+            amount_cents: session.amount_total ?? 0,
+            buyer_name: buyerName,
+            buyer_email: buyerEmail,
+            order_id: session.id,
+          })
+
+          const { data: item } = await supabase
+            .from('exclusive_content')
+            .select('title, reward_url, artists(artist_name)')
+            .eq('id', m.exclusiveId)
+            .single()
+          const artist = item?.artists as unknown as { artist_name: string } | null
+          await sendPurchaseEmail({
+            buyerName,
+            buyerEmail,
+            productTitle: item?.title ?? 'Your unlock',
+            amountCents: session.amount_total ?? 0,
+            accessUrl: item?.reward_url ?? null,
+            artistName: artist?.artist_name ?? 'the artist',
+          }).catch(() => {})
+        }
       } else if (session.metadata?.kind === 'ticket') {
         // Issue the paid ticket now that payment succeeded (idempotent on order_id).
         const m = session.metadata
