@@ -12,6 +12,7 @@ import FanWall from './FanWall'
 import DropAlerts from './DropAlerts'
 import FollowButton from './FollowButton'
 import SmsSignup from './SmsSignup'
+import TipJar from './TipJar'
 import BuyButton from './BuyButton'
 import PixelScripts from '@/components/PixelScripts'
 
@@ -213,6 +214,11 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
         {/* SMS drop alerts (opt-in) */}
         {artist.sms_enabled && (
           <SmsSignup slug={artist.slug} artistName={artist.artist_name} radiusClass={radiusClass} />
+        )}
+
+        {/* Tip jar (needs native payments; no external fallback) */}
+        {artist.tips_enabled && artist.stripe_charges_enabled && (
+          <TipJar artistId={artist.id} artistName={artist.artist_name} radiusClass={radiusClass} />
         )}
 
         {/* Pre-save campaigns */}

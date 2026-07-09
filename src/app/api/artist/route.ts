@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest) {
   if (!artist) return NextResponse.json({ error: 'Artist not found' }, { status: 404 })
 
   const body = await req.json()
-  const allowed = ['artist_name', 'bio', 'genres', 'avatar_url', 'cover_url', 'theme', 'background_type', 'background_value', 'subdomain', 'meta_pixel_id', 'tiktok_pixel_id', 'ga_measurement_id', 'fan_wall_enabled', 'seo_title', 'seo_description', 'hide_branding', 'font', 'button_style', 'shopify_domain', 'shopify_token', 'wallet_pass_enabled', 'sms_enabled']
+  const allowed = ['artist_name', 'bio', 'genres', 'avatar_url', 'cover_url', 'theme', 'background_type', 'background_value', 'subdomain', 'meta_pixel_id', 'tiktok_pixel_id', 'ga_measurement_id', 'fan_wall_enabled', 'seo_title', 'seo_description', 'hide_branding', 'font', 'button_style', 'shopify_domain', 'shopify_token', 'wallet_pass_enabled', 'sms_enabled', 'tips_enabled']
   const updates: Record<string, unknown> = {}
   for (const key of allowed) {
     if (key in body) updates[key] = body[key]

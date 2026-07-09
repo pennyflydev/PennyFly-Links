@@ -15,6 +15,7 @@ Every route and API in the app, plus a feature catalog with activation state. Se
 | **Ticketing** (types, QR ticket, scanner, reporting, emailed delivery) | `/dashboard/events/[id]/tickets` + `/scan`, `/ticket/[token]` | 0032 | ✅ free live; paid needs Connect; email needs Resend |
 | Store (digital products) | `/dashboard/store`, public Store section | 0016 | ✅ live (native checkout needs Connect) |
 | Memberships + follow-to-unlock exclusives | `/dashboard/membership` | 0022, 0023 | ✅ live (external links; native = Connect) |
+| Tip jar (one-off fan tips via Connect) | `/dashboard/tips`, public Support section | 0033 | ✅ built; needs Connect payouts live |
 | Shopify merch | Store section | 0017 | ✅ per-artist |
 | Playlists, media embeds, fan wall, custom links | artist page editor | 0007, 0012, 0008 | ✅ live |
 | Marketing pixels, SEO, white-label, appearance | `/dashboard/settings`, editor | 0002, 0013, 0015 | ✅ live |
@@ -36,7 +37,7 @@ Route groups in `()` add no URL segment. `[[...x]]` are Clerk catch-alls.
 
 **Public:** `/` · `/pricing` · `/[slug]` (artist page) · `/[slug]/[linkSlug]` (release) · `/embed/[slug]/[linkSlug]` (iframe) · `/events/[slug]` · `/pre-save/[slug]` · `/ticket/[token]` · `/ticket/success` · `/sign-in` · `/sign-up` · `/fans/sign-up`
 **Fan (authed):** `/fans` (own layout + guard)
-**Artist (Clerk-gated):** `/onboarding` · `/dashboard` + `/dashboard/{overview,artist-page,links,links/create,links/[id]/edit,analytics,pre-save,pre-save/create,pre-save/[id]/edit,events,events/create,events/[id]/edit,events/[id]/tickets,events/[id]/scan,store,store/create,store/[id]/edit,membership,payments,subscribers,sms,fan-wall,settings,refer}`
+**Artist (Clerk-gated):** `/onboarding` · `/dashboard` + `/dashboard/{overview,artist-page,links,links/create,links/[id]/edit,analytics,pre-save,pre-save/create,pre-save/[id]/edit,events,events/create,events/[id]/edit,events/[id]/tickets,events/[id]/scan,store,store/create,store/[id]/edit,membership,tips,payments,subscribers,sms,fan-wall,settings,refer}`
 **Label/admin:** `/admin` · `/roster` · `/roster/[artistId]`
 **Handler:** `/r/[code]` (referral redirect)
 
@@ -63,7 +64,7 @@ Auth: **Artist** = `auth()` + `getArtistForCurrentUser`; **Profile** = `getCurre
 `/api/sms/broadcast` POST (Artist) · `/api/sms/subscribe` POST (Public) · `/api/sms/webhook` POST (Twilio) · `/api/push/send` POST (Artist) · `/api/push/subscribe` POST (Public)
 
 ### Billing & Connect
-`/api/billing/checkout` POST (Profile) · `/api/billing/portal` POST · `/api/connect/onboard` POST · `/api/connect/login` POST (Artist) · `/api/connect/checkout` POST (Public)
+`/api/billing/checkout` POST (Profile) · `/api/billing/portal` POST · `/api/connect/onboard` POST · `/api/connect/login` POST (Artist) · `/api/connect/checkout` POST (Public) — `kind`: `product` · `tip`
 
 ### Imports & meta
 `/api/import/spotify` GET · `/api/import/linktree` GET · `/api/import/bandsintown` POST · `/api/odesli` GET (Public) · `/api/upload` POST
@@ -76,4 +77,4 @@ Auth: **Artist** = `auth()` + `getArtistForCurrentUser`; **Profile** = `getCurre
 
 ## Dashboard sidebar (in order)
 
-Overview · Artist Page · My FlyLinks · Analytics · Pre-save · Events · Store · Membership · Payments · Subscribers · SMS Alerts · Fan Wall · Settings — then footer: Refer & earn (all), Platform (admin), All Artists/My Roster (admin/label), Account.
+Overview · Artist Page · My FlyLinks · Analytics · Pre-save · Events · Store · Membership · Tip Jar · Payments · Subscribers · SMS Alerts · Fan Wall · Settings — then footer: Refer & earn (all), Platform (admin), All Artists/My Roster (admin/label), Account.

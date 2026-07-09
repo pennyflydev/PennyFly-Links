@@ -7,7 +7,7 @@ Postgres on Supabase. **`supabase/schema.sql` is the consolidated source of trut
 Every table has **RLS enabled**. But because auth is Clerk (not Supabase), server code uses the **service-role admin client, which bypasses RLS** — access is enforced in app code by scoping queries to the current artist/label. RLS only governs the **public anon path** (the public artist page). So:
 
 - **Public-read tables** carry a `for select using (is_published/is_active/true)` policy → visible to anon.
-- **Private tables** (subscribers, `sms_subscribers`, `tickets`, `spotify_presave_authorizations`, `email_integrations`, `fan_follows`, `referrals`, label tables, `push_subscriptions`) have RLS enabled with **no** public policy → only the admin client can read them.
+- **Private tables** (subscribers, `sms_subscribers`, `tickets`, `tips`, `spotify_presave_authorizations`, `email_integrations`, `fan_follows`, `referrals`, label tables, `push_subscriptions`) have RLS enabled with **no** public policy → only the admin client can read them.
 - **`exclusive_content`** deliberately has no public read policy so `reward_url` stays secret.
 
 ## Tables
@@ -18,7 +18,7 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 | Table | Purpose | Key columns | RLS |
 |---|---|---|---|
 | **profiles** | one row per Clerk user | `clerk_id` (uniq), `email`, `role` (admin/label/artist/fan), `plan`, `onboarded`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `current_period_end`, `referral_code` (uniq) | own-row select/update only |
-| **artists** | public artist page config (1 per profile) | `profile_id`→profiles, `label_id`→labels, `slug` (uniq), `artist_name`, `bio`, `theme`, `background_*`, `custom_domain`/`subdomain` (uniq), `is_signed`, pixels, SEO, `font`/`button_style`, `shopify_*`, `bandsintown_artist`, `spotify_artist_id`, `wallet_pass_enabled`, `sms_enabled`, `stripe_account_id`, `stripe_charges_enabled` | **public read (`using (true)`)**; owner update |
+| **artists** | public artist page config (1 per profile) | `profile_id`→profiles, `label_id`→labels, `slug` (uniq), `artist_name`, `bio`, `theme`, `background_*`, `custom_domain`/`subdomain` (uniq), `is_signed`, pixels, SEO, `font`/`button_style`, `shopify_*`, `bandsintown_artist`, `spotify_artist_id`, `wallet_pass_enabled`, `sms_enabled`, `stripe_account_id`, `stripe_charges_enabled`, `tips_enabled` | **public read (`using (true)`)**; owner update |
 | **labels** | account owning a roster | `owner_profile_id`→profiles, `name`, `logo_url`, `accent_color` | admin/service-role only |
 | **label_members** | team members | `label_id`→labels, `profile_id`→profiles, `member_role` (manager/viewer), uniq(label,profile) | admin/service-role only |
 | **label_member_invites** | pending team invites | `label_id`, `email`, `member_role`, `claimed_by`, `expires_at` (+14d) | admin/service-role only |
@@ -59,8 +59,9 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 | **events** | gig/launch landing pages | `artist_id`, `slug` (uniq), `start_at`, `venue`, `city`, `ticket_url`, `is_published`, `source` (manual/bandsintown), `external_id`; partial uniq(artist,external_id) | public read of published; owner all |
 | **ticket_types** | ticket tiers for an event | `event_id`, `artist_id`, `name`, `price_cents`, `quantity` (null=∞), `sold`, `is_active`, `sort_order` | public read of active; owner via service role |
 | **tickets** | issued tickets (single-scan QR) | `event_id`, `artist_id`, `ticket_type_id`, `token` (uniq), `buyer_name`, `buyer_email`, `status` (valid/used/refunded), `checked_in_at`, `order_id`; idx(event), idx(token) | admin/service-role only |
+| **tips** | one-off fan tips via Connect | `artist_id`, `amount_cents`, `supporter_name`, `message`, `order_id` (uniq = Stripe session); idx(artist) | admin/service-role only |
 
-## Migrations (0002 → 0032)
+## Migrations (0002 → 0033)
 
 `RUN_ALL_pending_migrations.sql` combines all of these idempotently — run it once to upgrade an existing DB. It covers **0002 → 0032**.
 
@@ -97,5 +98,6 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 | 0030 | `artists.sms_enabled`; `sms_subscribers` |
 | 0031 | `artists.stripe_account_id`, `stripe_charges_enabled` |
 | 0032 | `ticket_types`, `tickets` |
+| 0033 | `artists.tips_enabled`; `tips` |
 
-> **Next migration = 0033.** Add the file, append to `RUN_ALL_pending_migrations.sql`, and mirror into `schema.sql`.
+> **Next migration = 0034.** Add the file, append to `RUN_ALL_pending_migrations.sql`, and mirror into `schema.sql`.

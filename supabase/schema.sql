@@ -113,6 +113,7 @@ create table artists (
   sms_enabled        boolean not null default false,
   stripe_account_id      text,
   stripe_charges_enabled boolean not null default false,
+  tips_enabled       boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
@@ -613,6 +614,22 @@ create table tickets (
 alter table tickets enable row level security;
 create index if not exists tickets_event_idx on tickets (event_id);
 create index if not exists tickets_token_idx on tickets (token);
+
+-- ─────────────────────────────────────────────
+-- TIPS
+-- One-off fan tips to an artist via Stripe Connect; logged on completion
+-- ─────────────────────────────────────────────
+create table tips (
+  id             uuid primary key default uuid_generate_v4(),
+  artist_id      uuid not null references artists(id) on delete cascade,
+  amount_cents   integer not null,
+  supporter_name text,
+  message        text,
+  order_id       text unique,
+  created_at     timestamptz not null default now()
+);
+alter table tips enable row level security;
+create index if not exists tips_artist_idx on tips (artist_id);
 
 -- ─────────────────────────────────────────────
 -- updated_at triggers

@@ -6,7 +6,7 @@ Snapshot of what's shipped, what's next, and what's deliberately deferred, as of
 
 The full product is feature-complete across: artist pages, smart links, pre-save (with release-day auto-flip + notify), analytics + Spotify insights, subscribers/superfan CRM, events + Bandsintown import, **ticketing** (types, QR ticket, Google Wallet ticket, door scanner, reporting, **emailed ticket delivery** via Resend), store, memberships + follow-to-unlock, Shopify, playlists/embeds/fan wall, pixels/SEO/appearance, web-push + SMS drop alerts, fan accounts, referrals, wallet passes, Stripe Connect foundation + native store checkout, SaaS billing, and the full label layer (roster, team roles, campaigns, broadcast, impersonation).
 
-Migrations run 0002 → **0032**.
+Migrations run 0002 → **0033**.
 
 ## In progress / next up
 
@@ -24,7 +24,7 @@ Recommended order for what's left:
 
 The Connect foundation is in (`src/lib/stripe/connect.ts`, `/dashboard/payments`, native store checkout). These build on it and were parked when ticketing was prioritized. Each needs a `checkout.session.completed` branch in the Stripe webhook:
 
-- **Tips / tip jar** (new checkout `kind`)
+- ✅ **Tips / tip jar** — shipped (migration 0033). `kind='tip'` checkout, `tips` table, public `TipJar` widget on the artist page (gated on `tips_enabled` + `stripe_charges_enabled`), `/dashboard/tips` (enable + received-tips list). Inert until Stripe/Connect are live.
 - **Paid unlocks** — pay to unlock a track (vs the current Spotify-follow gate)
 - **Native recurring memberships** — memberships currently use external `join_url`; make them real Connect subscriptions ("your cut")
 - **Label revenue splits** — split one charge between label + artist (multi-party; the complex one — build **last**)

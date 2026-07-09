@@ -18,6 +18,7 @@ import {
   Gift,
   ShoppingBag,
   Star,
+  Heart,
   Smartphone,
   CreditCard,
 } from 'lucide-react'
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/dashboard/events', label: 'Events', icon: CalendarDays },
   { href: '/dashboard/store', label: 'Store', icon: ShoppingBag },
   { href: '/dashboard/membership', label: 'Membership', icon: Star },
+  { href: '/dashboard/tips', label: 'Tip Jar', icon: Heart },
   { href: '/dashboard/payments', label: 'Payments', icon: CreditCard },
   { href: '/dashboard/subscribers', label: 'Subscribers', icon: Users },
   { href: '/dashboard/sms', label: 'SMS Alerts', icon: Smartphone },

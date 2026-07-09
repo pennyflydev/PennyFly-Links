@@ -48,6 +48,19 @@ export async function POST(req: NextRequest) {
       if (session.subscription) {
         const sub = await stripe.subscriptions.retrieve(session.subscription as string)
         await applySubscription(sub)
+      } else if (session.metadata?.kind === 'tip') {
+        // Log the completed tip (idempotent on the checkout session id).
+        const m = session.metadata
+        const { data: existing } = await supabase.from('tips').select('id').eq('order_id', session.id).maybeSingle()
+        if (!existing) {
+          await supabase.from('tips').insert({
+            artist_id: m.artistId,
+            amount_cents: session.amount_total ?? 0,
+            supporter_name: m.supporterName ?? null,
+            message: m.message ?? null,
+            order_id: session.id,
+          })
+        }
       } else if (session.metadata?.kind === 'ticket') {
         // Issue the paid ticket now that payment succeeded (idempotent on order_id).
         const m = session.metadata

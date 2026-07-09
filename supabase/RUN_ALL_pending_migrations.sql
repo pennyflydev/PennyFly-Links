@@ -332,6 +332,20 @@ alter table tickets enable row level security;
 create index if not exists tickets_event_idx on tickets (event_id);
 create index if not exists tickets_token_idx on tickets (token);
 
+-- ── 0033 · Tip jar ──────────────────────────────────────────────────────
+alter table artists add column if not exists tips_enabled boolean not null default false;
+create table if not exists tips (
+  id             uuid primary key default gen_random_uuid(),
+  artist_id      uuid not null references artists(id) on delete cascade,
+  amount_cents   integer not null,
+  supporter_name text,
+  message        text,
+  order_id       text unique,
+  created_at     timestamptz not null default now()
+);
+alter table tips enable row level security;
+create index if not exists tips_artist_idx on tips (artist_id);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,
