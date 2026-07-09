@@ -722,6 +722,24 @@ create index if not exists unlocks_artist_idx on unlocks (artist_id);
 create index if not exists unlocks_order_idx on unlocks (order_id);
 
 -- ─────────────────────────────────────────────
+-- PERFORMANCE INDEXES
+-- Hot foreign keys we filter on constantly (Postgres doesn't auto-index FKs).
+-- Tables with a unique(artist_id, …) constraint already cover artist_id via
+-- that index's leftmost column and are omitted here.
+-- ─────────────────────────────────────────────
+create index if not exists analytics_events_artist_type_idx on analytics_events (artist_id, event_type);
+create index if not exists streaming_links_promo_idx on streaming_links (promo_link_id);
+create index if not exists events_artist_idx on events (artist_id);
+create index if not exists custom_links_artist_idx on custom_links (artist_id);
+create index if not exists social_links_artist_idx on social_links (artist_id);
+create index if not exists media_embeds_artist_idx on media_embeds (artist_id);
+create index if not exists playlist_spotlights_artist_idx on playlist_spotlights (artist_id);
+create index if not exists fan_wall_notes_artist_idx on fan_wall_notes (artist_id);
+create index if not exists products_artist_idx on products (artist_id);
+create index if not exists membership_tiers_artist_idx on membership_tiers (artist_id);
+create index if not exists exclusive_content_artist_idx on exclusive_content (artist_id);
+
+-- ─────────────────────────────────────────────
 -- updated_at triggers
 -- ─────────────────────────────────────────────
 create or replace function update_updated_at()

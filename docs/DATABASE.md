@@ -63,7 +63,7 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 | **tips** | one-off fan tips via Connect | `artist_id`, `amount_cents`, `supporter_name`, `message`, `order_id` (uniq = Stripe session); idx(artist) | admin/service-role only |
 | **purchases** | completed store product sales via Connect | `artist_id`, `product_id`, `amount_cents`, `buyer_name`, `buyer_email`, `order_id` (uniq = Stripe session); idx(artist) | admin/service-role only |
 
-## Migrations (0002 → 0035)
+## Migrations (0002 → 0036)
 
 `RUN_ALL_pending_migrations.sql` combines all of these idempotently — run it once to upgrade an existing DB. It covers **0002 → 0032**.
 
@@ -103,5 +103,6 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 | 0033 | `artists.tips_enabled`; `tips` |
 | 0034 | `purchases` |
 | 0035 | `exclusive_content.price_cents`; `unlocks` |
+| 0036 | performance indexes on hot foreign keys (`analytics_events(artist_id,event_type)`, `streaming_links(promo_link_id)`, + `artist_id` on 9 content tables) |
 
-> **Next migration = 0036.** Add the file, append to `RUN_ALL_pending_migrations.sql`, and mirror into `schema.sql`.
+> **Next migration = 0037.** Add the file, append to `RUN_ALL_pending_migrations.sql`, and mirror into `schema.sql`.

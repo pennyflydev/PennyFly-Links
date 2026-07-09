@@ -46,10 +46,35 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
   const artist = await getArtistBySlug(slug)
   if (!artist) notFound()
 
-  const [links, presaves] = await Promise.all([
+  // Everything below depends only on the artist we already have, so fetch it all
+  // in ONE parallel batch instead of a waterfall of sequential round-trips.
+  const admin = createAdminClient()
+  const [links, presaves, exclusives, followerRes, labelCampaigns, shopifyProducts, viewerProfile] = await Promise.all([
     getPublishedLinksForArtist(artist.id),
     getActivePresavesForArtist(artist.id),
+    admin
+      .from('exclusive_content')
+      .select('id, title, description, cover_url, price_cents, sort_order')
+      .eq('artist_id', artist.id)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .then((r) => r.data ?? []),
+    admin.from('fan_follows').select('id', { count: 'exact', head: true }).eq('artist_id', artist.id),
+    artist.label_id
+      ? admin
+          .from('label_campaigns')
+          .select('id, title, message, url, cover_url')
+          .eq('label_id', artist.label_id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .then((r) => r.data ?? [])
+      : Promise.resolve([] as { id: string; title: string; message: string; url: string | null; cover_url: string | null }[]),
+    artist.shopify_domain && artist.shopify_token
+      ? fetchShopifyProducts(artist.shopify_domain, artist.shopify_token)
+      : Promise.resolve([]),
+    getCurrentProfile(),
   ])
+  const followerCount = followerRes.count ?? 0
 
   // Track view in background
   trackView(artist.id)
@@ -69,27 +94,8 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
   const pageStyle = { ...bg, fontFamily: fontFamilyFor(artist.font) }
   const radiusClass = buttonRadiusFor(artist.button_style)
 
-  // Live merch from the artist's connected Shopify store.
-  const shopifyProducts = artist.shopify_domain && artist.shopify_token
-    ? await fetchShopifyProducts(artist.shopify_domain, artist.shopify_token)
-    : []
-
-  // Follow-to-unlock exclusives (reward_url is NEVER selected here — stays secret).
-  const exclusives = (await createAdminClient()
-    .from('exclusive_content')
-    .select('id, title, description, cover_url, price_cents, sort_order')
-    .eq('artist_id', artist.id)
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true })).data ?? []
-
-  // Follow state + follower count for the fan network.
-  const admin = createAdminClient()
-  const { count: followerCount } = await admin
-    .from('fan_follows')
-    .select('id', { count: 'exact', head: true })
-    .eq('artist_id', artist.id)
-
-  const viewerProfile = await getCurrentProfile()
+  // Follow state — one extra lookup, and only for a signed-in viewer (most
+  // public visitors are anonymous, so this is usually skipped entirely).
   let isFollowing = false
   if (viewerProfile) {
     const { data: existingFollow } = await admin
@@ -106,16 +112,6 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
   const walletUrl = artist.wallet_pass_enabled
     ? buildGoogleWalletSaveUrl({ id: artist.id, artist_name: artist.artist_name, slug: artist.slug, avatar_url: artist.avatar_url })
     : null
-
-  // Active label-wide campaigns (cross-promo across the roster).
-  const labelCampaigns = artist.label_id
-    ? (await createAdminClient()
-        .from('label_campaigns')
-        .select('id, title, message, url, cover_url')
-        .eq('label_id', artist.label_id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })).data ?? []
-    : []
 
   const socialIcons: Record<string, React.ElementType> = {
     website: Globe,

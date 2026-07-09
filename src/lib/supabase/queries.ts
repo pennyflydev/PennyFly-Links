@@ -141,7 +141,9 @@ export async function getPromoLinksForArtist(artistId: string) {
   return data ?? []
 }
 
-export async function getArtistBySlug(slug: string) {
+// Wrapped in cache() so generateMetadata + the page component share ONE query
+// per request instead of running this 11-join fetch twice.
+export const getArtistBySlug = cache(async (slug: string) => {
   const supabase = await createClient()
   const { data } = await supabase
     .from('artists')
@@ -162,7 +164,7 @@ export async function getArtistBySlug(slug: string) {
     .single()
 
   return data
-}
+})
 
 export async function getPublishedLinksForArtist(artistId: string) {
   const supabase = await createClient()
