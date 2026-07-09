@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- FlyLink — all pending migrations (0002 → 0026) in one block.
+-- FlyLink — all pending migrations (0002 → 0032) in one block.
 -- Paste the whole thing into the Supabase SQL editor and run once.
 -- Safe and idempotent: you can re-run it without harm.
 -- ════════════════════════════════════════════════════════════════════════

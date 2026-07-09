@@ -62,7 +62,7 @@ Grouped by area. `→` = foreign key. All PKs are `uuid`. Timestamps default `no
 
 ## Migrations (0002 → 0032)
 
-`RUN_ALL_pending_migrations.sql` combines all of these idempotently — run it once to upgrade an existing DB. (Its header comment says "0002 → 0026" but the body goes through **0032**; trust the body.)
+`RUN_ALL_pending_migrations.sql` combines all of these idempotently — run it once to upgrade an existing DB. It covers **0002 → 0032**.
 
 | # | Adds |
 |---|---|
