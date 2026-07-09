@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStripe, planForPriceId } from '@/lib/stripe'
+import { sendTicketEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe()
@@ -53,19 +54,37 @@ export async function POST(req: NextRequest) {
         const { data: existing } = await supabase.from('tickets').select('id').eq('order_id', session.id).maybeSingle()
         if (!existing) {
           const token = randomBytes(16).toString('hex')
+          const buyerEmail = m.buyerEmail ?? session.customer_details?.email ?? null
           const { error } = await supabase.from('tickets').insert({
             event_id: m.eventId,
             artist_id: m.artistId,
             ticket_type_id: m.ticketTypeId,
             token,
             buyer_name: m.buyerName ?? null,
-            buyer_email: m.buyerEmail ?? session.customer_details?.email ?? null,
+            buyer_email: buyerEmail,
             status: 'valid',
             order_id: session.id,
           })
           if (!error) {
-            const { data: tt } = await supabase.from('ticket_types').select('sold').eq('id', m.ticketTypeId).single()
+            const { data: tt } = await supabase
+              .from('ticket_types')
+              .select('sold, name, events(title, start_at, venue, city)')
+              .eq('id', m.ticketTypeId)
+              .single()
             if (tt) await supabase.from('ticket_types').update({ sold: tt.sold + 1 }).eq('id', m.ticketTypeId)
+
+            // Email the ticket link to the buyer (no-op unless email is configured).
+            const event = tt?.events as unknown as { title: string; start_at: string | null; venue: string | null; city: string | null } | null
+            await sendTicketEmail({
+              token,
+              buyerName: m.buyerName ?? null,
+              buyerEmail,
+              eventTitle: event?.title ?? 'Event',
+              startAt: event?.start_at ?? null,
+              venue: event?.venue ?? null,
+              city: event?.city ?? null,
+              ticketType: tt?.name ?? 'Ticket',
+            }).catch(() => {})
           }
         }
       }

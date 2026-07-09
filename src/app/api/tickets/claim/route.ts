@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { newTicketToken } from '@/lib/tickets'
+import { sendTicketEmail } from '@/lib/email'
 
 // Claim a FREE ticket (RSVP). Paid tickets go through /api/tickets/checkout.
 export async function POST(req: NextRequest) {
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminClient()
   const { data: type } = await supabase
     .from('ticket_types')
-    .select('id, event_id, artist_id, price_cents, quantity, sold, is_active')
+    .select('id, name, event_id, artist_id, price_cents, quantity, sold, is_active, events(title, start_at, venue, city)')
     .eq('id', ticketTypeId)
     .single()
 
@@ -34,6 +35,19 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   await supabase.from('ticket_types').update({ sold: type.sold + 1 }).eq('id', type.id)
+
+  // Email the ticket link to the buyer (no-op unless email is configured).
+  const event = type.events as unknown as { title: string; start_at: string | null; venue: string | null; city: string | null } | null
+  await sendTicketEmail({
+    token,
+    buyerName: name.trim(),
+    buyerEmail: email.trim(),
+    eventTitle: event?.title ?? 'Event',
+    startAt: event?.start_at ?? null,
+    venue: event?.venue ?? null,
+    city: event?.city ?? null,
+    ticketType: type.name,
+  }).catch(() => {})
 
   return NextResponse.json({ token })
 }
