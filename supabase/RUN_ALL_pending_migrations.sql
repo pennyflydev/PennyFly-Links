@@ -346,6 +346,20 @@ create table if not exists tips (
 alter table tips enable row level security;
 create index if not exists tips_artist_idx on tips (artist_id);
 
+-- ── 0034 · Store purchases ──────────────────────────────────────────────
+create table if not exists purchases (
+  id           uuid primary key default gen_random_uuid(),
+  artist_id    uuid not null references artists(id) on delete cascade,
+  product_id   uuid references products(id) on delete set null,
+  amount_cents integer not null,
+  buyer_name   text,
+  buyer_email  text,
+  order_id     text unique,
+  created_at   timestamptz not null default now()
+);
+alter table purchases enable row level security;
+create index if not exists purchases_artist_idx on purchases (artist_id);
+
 -- ════════════════════════════════════════════════════════════════════════
 -- Done. Every pending feature is now supported: pixels, labels/roles,
 -- onboarding, Spotify pre-save, billing, Playlist Spotlight, Fan Wall,

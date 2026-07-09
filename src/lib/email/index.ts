@@ -44,6 +44,61 @@ function siteOrigin(): string {
   return process.env.NEXT_PUBLIC_PROD_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://penny-fly-links.vercel.app'
 }
 
+// Send a buyer a receipt for a store purchase, with their access/download link
+// when the product has one. No-op if email isn't configured or no buyer email.
+export async function sendPurchaseEmail(purchase: {
+  buyerName: string | null
+  buyerEmail: string | null
+  productTitle: string
+  amountCents: number
+  accessUrl: string | null
+  artistName: string
+}): Promise<boolean> {
+  if (!isEmailConfigured()) return false
+  const to = purchase.buyerEmail?.trim()
+  if (!to) return false
+
+  const greetingName = purchase.buyerName?.trim() ? escapeHtml(purchase.buyerName.trim()) : 'there'
+  const title = escapeHtml(purchase.productTitle)
+  const artist = escapeHtml(purchase.artistName)
+  const amount = `$${(purchase.amountCents / 100).toFixed(2)}`
+  const access = purchase.accessUrl?.trim() || null
+
+  const html = `<!doctype html>
+<html><body style="margin:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#141414;border:1px solid #262626;border-radius:16px;overflow:hidden;">
+        <tr><td style="padding:32px 32px 8px;">
+          <p style="margin:0 0 4px;color:#a3a3a3;font-size:13px;letter-spacing:.08em;text-transform:uppercase;">Receipt</p>
+          <h1 style="margin:0;color:#fff;font-size:22px;line-height:1.25;">${title}</h1>
+        </td></tr>
+        <tr><td style="padding:12px 32px 8px;">
+          <p style="margin:0 0 16px;color:#d4d4d4;font-size:15px;line-height:1.5;">Hi ${greetingName}, thanks for supporting ${artist}! Your purchase of <strong>${title}</strong> (${amount}) is confirmed.</p>
+        </td></tr>
+        ${access ? `<tr><td style="padding:8px 32px 32px;">
+          <a href="${access}" style="display:block;background:#fff;color:#000;text-align:center;text-decoration:none;font-weight:600;font-size:15px;padding:14px 20px;border-radius:12px;">Access your purchase</a>
+          <p style="margin:16px 0 0;color:#737373;font-size:12px;line-height:1.5;text-align:center;">Or paste this link into your browser:<br><a href="${access}" style="color:#a3a3a3;">${access}</a></p>
+        </td></tr>` : `<tr><td style="padding:0 32px 32px;"><p style="margin:0;color:#737373;font-size:13px;">${artist} will be in touch with your item.</p></td></tr>`}
+      </table>
+      <p style="margin:24px 0 0;color:#525252;font-size:12px;">Powered by FlyLink</p>
+    </td></tr>
+  </table>
+</body></html>`
+
+  const textLines = [
+    `Receipt — ${purchase.productTitle}`,
+    '',
+    `Hi ${purchase.buyerName?.trim() || 'there'}, thanks for supporting ${purchase.artistName}!`,
+    `Your purchase of ${purchase.productTitle} (${amount}) is confirmed.`,
+    ...(access ? ['', 'Access your purchase:', access] : ['', `${purchase.artistName} will be in touch with your item.`]),
+    '',
+    'Powered by FlyLink',
+  ]
+
+  return sendEmail({ to, subject: `Your receipt for ${purchase.productTitle}`, html, text: textLines.join('\n') })
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string))
 }

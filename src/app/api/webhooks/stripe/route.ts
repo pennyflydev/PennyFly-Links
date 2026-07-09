@@ -3,7 +3,7 @@ import { randomBytes } from 'crypto'
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getStripe, planForPriceId } from '@/lib/stripe'
-import { sendTicketEmail } from '@/lib/email'
+import { sendTicketEmail, sendPurchaseEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe()
@@ -60,6 +60,38 @@ export async function POST(req: NextRequest) {
             message: m.message ?? null,
             order_id: session.id,
           })
+        }
+      } else if (session.metadata?.kind === 'product') {
+        // Record the store purchase (idempotent on session id) and receipt the buyer.
+        const m = session.metadata
+        const { data: existing } = await supabase.from('purchases').select('id').eq('order_id', session.id).maybeSingle()
+        if (!existing) {
+          const buyerEmail = session.customer_details?.email ?? null
+          const buyerName = session.customer_details?.name ?? null
+          await supabase.from('purchases').insert({
+            artist_id: m.artistId,
+            product_id: m.productId,
+            amount_cents: session.amount_total ?? 0,
+            buyer_name: buyerName,
+            buyer_email: buyerEmail,
+            order_id: session.id,
+          })
+
+          // Email a receipt with the access link (no-op unless email is configured).
+          const { data: product } = await supabase
+            .from('products')
+            .select('title, buy_url, artists(artist_name)')
+            .eq('id', m.productId)
+            .single()
+          const artist = product?.artists as unknown as { artist_name: string } | null
+          await sendPurchaseEmail({
+            buyerName,
+            buyerEmail,
+            productTitle: product?.title ?? 'Your purchase',
+            amountCents: session.amount_total ?? 0,
+            accessUrl: product?.buy_url ?? null,
+            artistName: artist?.artist_name ?? 'the artist',
+          }).catch(() => {})
         }
       } else if (session.metadata?.kind === 'ticket') {
         // Issue the paid ticket now that payment succeeded (idempotent on order_id).

@@ -13,7 +13,7 @@ Every route and API in the app, plus a feature catalog with activation state. Se
 | Subscribers / fan CRM + superfans | `/dashboard/subscribers` | 0024 | ✅ live |
 | Events + Bandsintown import | `/dashboard/events`, `/events/[slug]` | 0009, 0027 | ✅ live |
 | **Ticketing** (types, QR ticket, scanner, reporting, emailed delivery) | `/dashboard/events/[id]/tickets` + `/scan`, `/ticket/[token]` | 0032 | ✅ free live; paid needs Connect; email needs Resend |
-| Store (digital products) | `/dashboard/store`, public Store section | 0016 | ✅ live (native checkout needs Connect) |
+| Store (digital products) | `/dashboard/store`, public Store section | 0016, 0034 | ✅ live; native checkout needs Connect — sales recorded in `purchases` + buyer receipt emailed |
 | Memberships + follow-to-unlock exclusives | `/dashboard/membership` | 0022, 0023 | ✅ live (external links; native = Connect) |
 | Tip jar (one-off fan tips via Connect) | `/dashboard/tips`, public Support section | 0033 | ✅ built; needs Connect payouts live |
 | Shopify merch | Store section | 0017 | ✅ per-artist |
