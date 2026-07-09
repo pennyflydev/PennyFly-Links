@@ -431,6 +431,59 @@ create policy "Artist can manage own products" on products for all using (
 );
 
 -- ─────────────────────────────────────────────
+-- MEMBERSHIP TIERS
+-- Recurring fan support tiers (join links today; native Connect subs later)
+-- ─────────────────────────────────────────────
+create table membership_tiers (
+  id          uuid primary key default uuid_generate_v4(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  name        text not null,
+  price_cents integer not null default 0,
+  interval    text not null default 'month' check (interval in ('month', 'year')),
+  description text default '',
+  perks       text[] default '{}',
+  join_url    text,
+  is_active   boolean not null default true,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+alter table membership_tiers enable row level security;
+create policy "Anyone can read active tiers" on membership_tiers for select using (is_active = true);
+
+-- ─────────────────────────────────────────────
+-- EXCLUSIVE CONTENT
+-- Follow-to-unlock rewards; reward_url stays secret (no public read policy)
+-- ─────────────────────────────────────────────
+create table exclusive_content (
+  id          uuid primary key default uuid_generate_v4(),
+  artist_id   uuid not null references artists(id) on delete cascade,
+  title       text not null,
+  description text default '',
+  reward_url  text not null,
+  cover_url   text,
+  is_active   boolean not null default true,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+-- RLS on, no public read policy: only the service role sees reward_url.
+alter table exclusive_content enable row level security;
+
+-- ─────────────────────────────────────────────
+-- PUSH SUBSCRIPTIONS
+-- Web-push endpoints fans opt into for drop alerts
+-- ─────────────────────────────────────────────
+create table push_subscriptions (
+  id         uuid primary key default uuid_generate_v4(),
+  artist_id  uuid not null references artists(id) on delete cascade,
+  endpoint   text not null,
+  p256dh     text not null,
+  auth       text not null,
+  created_at timestamptz not null default now(),
+  unique (artist_id, endpoint)
+);
+alter table push_subscriptions enable row level security;
+
+-- ─────────────────────────────────────────────
 -- EVENTS
 -- Gig / launch landing pages with countdown + ticket link
 -- ─────────────────────────────────────────────
