@@ -28,7 +28,8 @@ Every route and API in the app, plus a feature catalog with activation state. Se
 | **Payments / Stripe Connect** | `/dashboard/payments` | 0031 | ⚙️ inert until Stripe+Connect |
 | SaaS billing (plans) | `/dashboard/settings` → Billing | 0006 | ⚙️ inert until Stripe |
 | Label roster, team, campaigns, broadcast | `/roster`, `/admin` | 0003, 0019-0021 | ✅ live |
-| **Label HQ** — dedicated label dashboard + roster-wide revenue (tickets/tips/store/unlocks per artist) | `/label` | — | ✅ live (label/admin only; gross figures) |
+| **Label HQ** — dedicated label dashboard: roster-wide revenue (tickets/tips/store/unlocks per artist) + audience metrics (total/new/superfans, clicks) + 6-week fan-growth | `/label` | — | ✅ live (label/admin only; gross figures) |
+| Artist-seat limits (plan-enforced) | roster invite | — | ✅ enforced in `/api/invites` |
 | Impersonation ("Act as") | roster | — | ✅ live |
 
 Legend: ✅ live · ⚙️ built but inert until an account/env is configured.

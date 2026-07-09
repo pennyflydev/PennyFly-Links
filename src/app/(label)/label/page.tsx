@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { DollarSign, Ticket, Heart, ShoppingBag, Sparkles, Radio, Users, TrendingUp } from 'lucide-react'
+import { DollarSign, Ticket, Heart, ShoppingBag, Sparkles, Radio, Users, TrendingUp, Star, UserPlus, MousePointerClick } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentProfile, getLabelForUser } from '@/lib/supabase/queries'
 
@@ -60,7 +60,46 @@ export default async function LabelHomePage() {
     .sort((x, y) => y.total - x.total)
   const grand = totals.tickets + totals.tips + totals.store + totals.unlocks
 
+  // Audience metrics — all reliable count queries (head:true), scoped to roster.
+  const now = new Date()
+  const iso = (d: Date) => d.toISOString()
+  const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000)
+
+  let totalFans = 0
+  let newFans30 = 0
+  let superFans = 0
+  let totalClicks = 0
+  const weeks: { label: string; count: number }[] = []
+
+  if (artistIds.length) {
+    const [tf, nf, sf, tc] = await Promise.all([
+      supabase.from('subscribers').select('id', { count: 'exact', head: true }).in('artist_id', artistIds),
+      supabase.from('subscribers').select('id', { count: 'exact', head: true }).in('artist_id', artistIds).gte('created_at', iso(daysAgo(30))),
+      supabase.from('subscribers').select('id', { count: 'exact', head: true }).in('artist_id', artistIds).eq('is_superfan', true),
+      supabase.from('analytics_events').select('id', { count: 'exact', head: true }).in('artist_id', artistIds).eq('event_type', 'click'),
+    ])
+    totalFans = tf.count ?? 0
+    newFans30 = nf.count ?? 0
+    superFans = sf.count ?? 0
+    totalClicks = tc.count ?? 0
+
+    // New fans per week for the last 6 weeks (fan-growth trend).
+    const bounds = Array.from({ length: 6 }, (_, i) => {
+      const start = daysAgo((6 - i) * 7)
+      const end = daysAgo((5 - i) * 7)
+      return { label: `${start.getMonth() + 1}/${start.getDate()}`, start: iso(start), end: iso(end) }
+    })
+    const weekCounts = await Promise.all(
+      bounds.map((b) =>
+        supabase.from('subscribers').select('id', { count: 'exact', head: true }).in('artist_id', artistIds).gte('created_at', b.start).lt('created_at', b.end)
+      )
+    )
+    bounds.forEach((b, i) => weeks.push({ label: b.label, count: weekCounts[i].count ?? 0 }))
+  }
+  const weekMax = Math.max(1, ...weeks.map((w) => w.count))
+
   const money = (cents: number) => `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const num = (n: number) => n.toLocaleString('en-US')
 
   const sourceCards = [
     { key: 'tickets', label: 'Tickets', icon: Ticket, value: totals.tickets },
@@ -163,7 +202,49 @@ export default async function LabelHomePage() {
         </div>
       )}
 
-      <div className="mt-6 flex items-center gap-4 text-sm">
+      {/* Audience & engagement */}
+      {artists.length > 0 && (
+        <div className="mt-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-4 h-4 text-yellow-400" />
+            <h2 className="text-lg font-bold text-white">Audience &amp; engagement</h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            {[
+              { label: 'Total fans', value: num(totalFans), icon: Users },
+              { label: 'New fans (30d)', value: num(newFans30), icon: UserPlus },
+              { label: 'Superfans', value: num(superFans), icon: Star },
+              { label: 'Total clicks', value: num(totalClicks), icon: MousePointerClick },
+            ].map(({ label: l, value, icon: Icon }) => (
+              <div key={l} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                <div className="flex items-center gap-2 text-zinc-500 text-xs mb-2">
+                  <Icon className="w-3.5 h-3.5" /> {l}
+                </div>
+                <p className="text-xl font-bold text-white">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Fan growth — new fans per week, last 6 weeks */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+            <p className="text-sm font-medium text-white mb-4">Fan growth <span className="text-zinc-500 font-normal">· new fans per week</span></p>
+            <div className="flex items-end justify-between gap-2">
+              {weeks.map((w) => (
+                <div key={w.label} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                  <span className="text-xs text-zinc-400 tabular-nums">{w.count}</span>
+                  <div className="w-full h-24 bg-zinc-800/50 rounded-md flex items-end overflow-hidden">
+                    <div className="w-full bg-yellow-400/80" style={{ height: `${Math.round((w.count / weekMax) * 100)}%` }} />
+                  </div>
+                  <span className="text-[10px] text-zinc-600 tabular-nums">{w.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8 flex items-center gap-4 text-sm">
         <Link href="/roster" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
           <Users className="w-4 h-4" /> Manage roster
         </Link>
