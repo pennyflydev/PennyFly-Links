@@ -217,14 +217,14 @@ export default function SettingsPage() {
     <div className="p-8">
       <h1 className="text-2xl font-bold text-white mb-8">Settings</h1>
 
-      <div className="flex gap-8">
-        {/* Tab nav */}
-        <nav className="w-44 shrink-0 space-y-0.5">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+        {/* Tab nav — horizontal scroll on mobile, vertical rail on desktop */}
+        <nav className="flex md:flex-col md:w-44 md:shrink-0 gap-1 md:gap-0.5 overflow-x-auto md:overflow-visible -mx-1 px-1 md:mx-0 md:px-0">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
+              className={`shrink-0 md:w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap ${
                 activeTab === id ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
               }`}
             >

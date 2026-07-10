@@ -161,7 +161,8 @@ export default async function LabelHomePage() {
         </div>
       ) : (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="text-zinc-500 border-b border-zinc-800 text-left">
                 <th className="px-5 py-3 font-medium">Artist</th>
@@ -199,6 +200,7 @@ export default async function LabelHomePage() {
               </tr>
             </tfoot>
           </table>
+          </div>
         </div>
       )}
 
