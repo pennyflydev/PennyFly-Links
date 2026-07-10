@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import AccountMenu from './AccountMenu'
 import {
   LayoutDashboard,
   User,
@@ -135,10 +135,7 @@ export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?
             {isAdmin ? 'All Artists' : 'My Roster'}
           </Link>
         )}
-        <div className="flex items-center gap-3 px-3">
-          <UserButton />
-          <span className="text-xs text-zinc-500 truncate">Account</span>
-        </div>
+        <AccountMenu isLabel={isLabel} />
       </div>
     </aside>
   )

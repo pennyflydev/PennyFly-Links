@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { User, Globe, Bell, Plug, ShieldCheck, CreditCard, Loader2, Check, X } from 'lucide-react'
+import Link from 'next/link'
+import { useClerk } from '@clerk/nextjs'
+import { User, Globe, Bell, Plug, ShieldCheck, CreditCard, Loader2, Check, X, UserCog, LogOut, Smartphone, Radio } from 'lucide-react'
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -19,6 +21,7 @@ const BILLING_PLANS = [
 ] as const
 
 export default function SettingsPage() {
+  const clerk = useClerk()
   const [activeTab, setActiveTab] = useState('profile')
 
   // Profile state
@@ -46,6 +49,7 @@ export default function SettingsPage() {
     const q = new URLSearchParams(window.location.search).get('billing')
     if (q === 'success') { setActiveTab('billing'); setBillingMsg('Subscription updated — thank you!') }
     if (q === 'cancelled') { setActiveTab('billing'); setBillingMsg('Checkout cancelled.') }
+    if (q === 'manage') setActiveTab('billing')
   }, [])
 
   useEffect(() => {
@@ -476,9 +480,64 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {(activeTab === 'notifications' || activeTab === 'account') && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
-              <p className="text-zinc-400 text-sm">Coming soon</p>
+          {activeTab === 'notifications' && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-base font-semibold text-white mb-1">Notifications</h2>
+                <p className="text-sm text-zinc-400">Reach your fans the moment a drop is live. Manage each channel from its own page.</p>
+              </div>
+              <Link href="/dashboard/sms" className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors">
+                <div className="w-9 h-9 bg-yellow-400/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Smartphone className="w-4 h-4 text-yellow-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">SMS drop alerts</p>
+                  <p className="text-xs text-zinc-500">Collect opt-ins and text your fans when a release goes live.</p>
+                </div>
+                <span className="text-xs text-zinc-500">Manage →</span>
+              </Link>
+              <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <div className="w-9 h-9 bg-yellow-400/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Radio className="w-4 h-4 text-yellow-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">Push drop alerts</p>
+                  <p className="text-xs text-zinc-500">Fans opt into web-push alerts in one tap from your public page — no setup needed.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'account' && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-base font-semibold text-white mb-1">Account</h2>
+                <p className="text-sm text-zinc-400">Your login, email, password and security. Switch between accounts from the menu in the bottom-left of the sidebar.</p>
+              </div>
+              <button
+                onClick={() => clerk.openUserProfile()}
+                className="w-full flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors text-left"
+              >
+                <div className="w-9 h-9 bg-yellow-400/10 rounded-lg flex items-center justify-center shrink-0">
+                  <UserCog className="w-4 h-4 text-yellow-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">Manage account</p>
+                  <p className="text-xs text-zinc-500">Update your email, password, connected logins and security.</p>
+                </div>
+              </button>
+              <button
+                onClick={() => clerk.signOut({ redirectUrl: '/' })}
+                className="w-full flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-red-500/30 transition-colors text-left"
+              >
+                <div className="w-9 h-9 bg-red-500/10 rounded-lg flex items-center justify-center shrink-0">
+                  <LogOut className="w-4 h-4 text-red-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">Sign out</p>
+                  <p className="text-xs text-zinc-500">Sign out of your account on this device.</p>
+                </div>
+              </button>
             </div>
           )}
         </div>
