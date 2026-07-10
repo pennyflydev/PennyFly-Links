@@ -31,10 +31,14 @@ function relativeTime(iso: string) {
 
 export default function OverviewClient({
   events,
+  allViews,
+  allClicks,
   activeLinks,
   artistSlug,
 }: {
   events: Event[]
+  allViews: number
+  allClicks: number
   activeLinks: number
   artistSlug: string | null
 }) {
@@ -47,8 +51,10 @@ export default function OverviewClient({
     return { filtered: events.filter((e) => new Date(e.created_at).getTime() >= cutoff), days: r.days }
   }, [events, range])
 
-  const totalViews = filtered.filter((e) => e.event_type === 'view').length
-  const totalClicks = filtered.filter((e) => e.event_type === 'click').length
+  // "All" totals come from the server's all-time counts; the other ranges are
+  // fully within the fetched 30-day window, so counting the rows is accurate.
+  const totalViews = range === 'all' ? allViews : filtered.filter((e) => e.event_type === 'view').length
+  const totalClicks = range === 'all' ? allClicks : filtered.filter((e) => e.event_type === 'click').length
   const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0'
 
   // Daily buckets for the chart

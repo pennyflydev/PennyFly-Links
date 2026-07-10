@@ -60,6 +60,13 @@ re-touched. Newest first. Each entry: what changed, files, commit.
 
 ## Performance
 
+- **Overview: stop downloading all analytics rows** — _(this commit)_
+  `/dashboard/overview` fetched up to 5,000 raw `analytics_events` rows every
+  load (and silently under-counted past 5k). Now: all-time totals via `count`
+  queries (accurate at any scale), and only the last-30-days rows are fetched
+  for the chart / recent-clicks / top-platforms (the chart never shows >30d).
+  Same UI, instant range switching preserved.
+
 - **Public page + hot-FK indexes** — `1e9d1bc`
   `getArtistBySlug` wrapped in `cache()` (was running its 11-join query twice per
   load). `[slug]` page waterfall (5 sequential queries) → one `Promise.all`.
