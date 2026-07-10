@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import AccountMenu from './AccountMenu'
@@ -22,6 +23,8 @@ import {
   Smartphone,
   CreditCard,
   TrendingUp,
+  Menu,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -75,6 +78,12 @@ export default function Sidebar({
   variant?: 'artist' | 'label'
 }) {
   const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
 
   const isActive = (href: string, exact = false) =>
     exact ? pathname === href : pathname.startsWith(href)
@@ -93,16 +102,44 @@ export default function Sidebar({
   ]
 
   return (
-    <aside className="w-56 flex flex-col bg-zinc-900 border-r border-zinc-800 shrink-0">
-      {/* Logo */}
-      <div className="px-4 py-5 border-b border-zinc-800">
+    <>
+      {/* Mobile top bar (hamburger) — only below md */}
+      <div className="md:hidden fixed top-0 inset-x-0 h-14 z-30 flex items-center gap-3 px-4 bg-zinc-900 border-b border-zinc-800">
+        <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="text-zinc-300 hover:text-white">
+          <Menu className="w-5 h-5" />
+        </button>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-yellow-400 rounded-md flex items-center justify-center">
-            <Music2 className="w-4 h-4 text-black" />
+          <div className="w-6 h-6 bg-yellow-400 rounded-md flex items-center justify-center">
+            <Music2 className="w-3.5 h-3.5 text-black" />
           </div>
-          <span className="font-bold text-white text-lg">FlyLink</span>
+          <span className="font-bold text-white">FlyLink</span>
         </div>
       </div>
+
+      {/* Backdrop when the drawer is open on mobile */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} aria-hidden />
+      )}
+
+      <aside
+        className={cn(
+          'w-56 flex flex-col bg-zinc-900 border-r border-zinc-800 shrink-0 z-50',
+          'fixed inset-y-0 left-0 transition-transform duration-200 md:static md:translate-x-0',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        )}
+      >
+        {/* Logo */}
+        <div className="px-4 py-5 border-b border-zinc-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-yellow-400 rounded-md flex items-center justify-center">
+              <Music2 className="w-4 h-4 text-black" />
+            </div>
+            <span className="font-bold text-white text-lg">FlyLink</span>
+          </div>
+          <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="md:hidden text-zinc-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
@@ -172,6 +209,7 @@ export default function Sidebar({
           <AccountMenu isLabel={isLabel} />
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
