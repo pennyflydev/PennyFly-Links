@@ -14,7 +14,7 @@ export default async function LabelLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex h-screen bg-black overflow-hidden">
-      <Sidebar isAdmin={isAdmin} isLabel={isLabel} />
+      <Sidebar isAdmin={isAdmin} isLabel={isLabel} variant="label" />
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   )

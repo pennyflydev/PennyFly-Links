@@ -65,11 +65,32 @@ const navGroups: { title?: string; items: NavItem[] }[] = [
   },
 ]
 
-export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?: boolean; isLabel?: boolean }) {
+export default function Sidebar({
+  isAdmin = false,
+  isLabel = false,
+  variant = 'artist',
+}: {
+  isAdmin?: boolean
+  isLabel?: boolean
+  variant?: 'artist' | 'label'
+}) {
   const pathname = usePathname()
 
   const isActive = (href: string, exact = false) =>
     exact ? pathname === href : pathname.startsWith(href)
+
+  const linkClass = (active: boolean) =>
+    cn(
+      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
+      active ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+    )
+
+  // Label-context primary nav (rendered in the (label) layout: /label, /roster, /admin).
+  const labelNav: NavItem[] = [
+    ...(isAdmin ? [{ href: '/admin', label: 'Platform', icon: BarChart3 }] : []),
+    { href: '/label', label: 'Label HQ', icon: TrendingUp, exact: true },
+    { href: '/roster', label: isAdmin ? 'All Artists' : 'My Roster', icon: Radio },
+  ]
 
   return (
     <aside className="w-56 flex flex-col bg-zinc-900 border-r border-zinc-800 shrink-0">
@@ -85,103 +106,69 @@ export default function Sidebar({ isAdmin = false, isLabel = false }: { isAdmin?
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
-        {navGroups.map((group, gi) => (
-          <div key={group.title ?? gi} className={gi > 0 ? 'pt-3' : ''}>
-            {group.title && (
-              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">{group.title}</p>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map(({ href, label, icon: Icon, exact }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                    isActive(href, exact)
-                      ? 'bg-zinc-800 text-white'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-                  )}
-                >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  {label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
+        {variant === 'label'
+          ? labelNav.map(({ href, label, icon: Icon, exact }) => (
+              <Link key={href} href={href} className={linkClass(isActive(href, exact))}>
+                <Icon className="w-4 h-4 shrink-0" />
+                {label}
+              </Link>
+            ))
+          : navGroups.map((group, gi) => (
+              <div key={group.title ?? gi} className={gi > 0 ? 'pt-3' : ''}>
+                {group.title && (
+                  <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">{group.title}</p>
+                )}
+                <div className="space-y-0.5">
+                  {group.items.map(({ href, label, icon: Icon, exact }) => (
+                    <Link key={href} href={href} className={linkClass(isActive(href, exact))}>
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
       </nav>
 
       {/* Footer */}
       <div className="px-4 py-4 border-t border-zinc-800 space-y-1">
-        {!isLabel && (
-          <Link
-            href="/dashboard/settings"
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
-              pathname.startsWith('/dashboard/settings')
-                ? 'bg-zinc-800 text-white'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+        {variant === 'artist' && (
+          <>
+            {!isLabel && (
+              <Link href="/dashboard/settings" className={linkClass(pathname.startsWith('/dashboard/settings'))}>
+                <Settings className="w-4 h-4 shrink-0" />
+                Settings
+              </Link>
             )}
-          >
-            <Settings className="w-4 h-4 shrink-0" />
-            Settings
-          </Link>
-        )}
-        <Link
-          href="/dashboard/refer"
-          className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
-            pathname.startsWith('/dashboard/refer')
-              ? 'bg-zinc-800 text-white'
-              : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-          )}
-        >
-          <Gift className="w-4 h-4 shrink-0" />
-          Refer &amp; earn
-        </Link>
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
-              pathname === '/admin'
-                ? 'bg-yellow-400/10 text-yellow-400'
-                : 'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
+            <Link href="/dashboard/refer" className={linkClass(pathname.startsWith('/dashboard/refer'))}>
+              <Gift className="w-4 h-4 shrink-0" />
+              Refer &amp; earn
+            </Link>
+            {/* Jump to the label/admin area (also lets an impersonating label get back). */}
+            {(isAdmin || isLabel) && (
+              <Link
+                href="/label"
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
+                  'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
+                )}
+              >
+                <TrendingUp className="w-4 h-4 shrink-0" />
+                Label HQ
+              </Link>
             )}
-          >
-            <BarChart3 className="w-4 h-4 shrink-0" />
-            Platform
-          </Link>
-        )}
-        {(isAdmin || isLabel) && (
-          <Link
-            href="/label"
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
-              pathname === '/label'
-                ? 'bg-yellow-400/10 text-yellow-400'
-                : 'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5"
+              >
+                <BarChart3 className="w-4 h-4 shrink-0" />
+                Platform
+              </Link>
             )}
-          >
-            <TrendingUp className="w-4 h-4 shrink-0" />
-            Label HQ
-          </Link>
+          </>
         )}
-        {(isAdmin || isLabel) && (
-          <Link
-            href="/roster"
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full',
-              pathname.startsWith('/roster')
-                ? 'bg-yellow-400/10 text-yellow-400'
-                : 'text-zinc-400 hover:text-yellow-400 hover:bg-yellow-400/5'
-            )}
-          >
-            <Radio className="w-4 h-4 shrink-0" />
-            {isAdmin ? 'All Artists' : 'My Roster'}
-          </Link>
-        )}
-        <div className="pt-2 mt-1 border-t border-zinc-800">
+        <div className={variant === 'artist' ? 'pt-2 mt-1 border-t border-zinc-800' : ''}>
           <AccountMenu isLabel={isLabel} />
         </div>
       </div>

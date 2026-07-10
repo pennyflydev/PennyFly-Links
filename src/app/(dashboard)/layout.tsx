@@ -26,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
       <ReferralClaim />
-      <Sidebar isAdmin={isAdmin} isLabel={isLabel} />
+      <Sidebar isAdmin={isAdmin} isLabel={isLabel} variant="artist" />
       <div className="flex-1 flex flex-col overflow-hidden">
         {impersonation && <ImpersonationBanner artistName={impersonation.artistName} />}
         <main className="flex-1 overflow-y-auto">{children}</main>
