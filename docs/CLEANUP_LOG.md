@@ -5,7 +5,19 @@ re-touched. Newest first. Each entry: what changed, files, commit.
 
 ## UI
 
-- **Overview nav active-state fix + responsive stat grids** — _(this commit)_
+- **Responsive: artist-page editor + form/choice grids** — _(this commit)_
+  Artist-page editor was a two-column `w-[380px]` editor + `w-[390px]` preview
+  (~770px, unusable on mobile) → now stacks: editor full-width on mobile, preview
+  `hidden md:flex`. Stacked choice cards / field pairs on onboarding, events
+  create+edit, links edit (`grid-cols-1 sm:grid-cols-2`). Small `gap-2` picker
+  grids left as-is (fine dense on mobile).
+
+  Page coverage after this: the responsive-risk dashboard pages are all handled;
+  remaining unchecked pages scan clean (single-column forms/lists: events list,
+  fan-wall, membership, payments, pre-save ×3, refer, store ×3, links list/create)
+  or are mobile-first public/fan pages or Clerk auth pages.
+
+- **Overview nav active-state fix + responsive stat grids** — `f1f8192`
   Sidebar "Overview" pointed at `/dashboard` (which redirects to
   `/dashboard/overview`), so it never highlighted as active — repointed to
   `/dashboard/overview`. Made fixed `grid-cols-3/4` stat rows responsive

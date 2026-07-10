@@ -202,7 +202,7 @@ export default function EditLinkPage() {
 
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
             <p className="text-sm font-medium text-white">Schedule <span className="text-xs text-zinc-500 font-normal">(optional)</span></p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">Go live at</label>
                 <input type="datetime-local" value={publishAt} onChange={(e) => setPublishAt(e.target.value)}

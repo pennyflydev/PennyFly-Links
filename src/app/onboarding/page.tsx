@@ -47,7 +47,7 @@ export default function OnboardingPage() {
 
         {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
             onClick={() => setChoice('artist')}
             className={`p-6 rounded-2xl border text-left transition-colors ${

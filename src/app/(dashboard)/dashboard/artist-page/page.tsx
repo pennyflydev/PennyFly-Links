@@ -218,9 +218,9 @@ export default function ArtistPageEditor() {
 
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col md:flex-row h-full">
       {/* Editor panel */}
-      <div className="w-[380px] border-r border-zinc-800 overflow-y-auto bg-zinc-900/50">
+      <div className="w-full md:w-[380px] md:shrink-0 border-b md:border-b-0 md:border-r border-zinc-800 overflow-y-auto bg-zinc-900/50">
         <div className="sticky top-0 z-10 bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center gap-3">
           <button
             onClick={save}
@@ -616,7 +616,7 @@ export default function ArtistPageEditor() {
       </div>
 
       {/* Live preview */}
-      <div className="flex-1 bg-zinc-950 flex flex-col items-center justify-start p-8 overflow-y-auto">
+      <div className="hidden md:flex flex-1 bg-zinc-950 flex-col items-center justify-start p-8 overflow-y-auto">
         <p className="text-xs text-zinc-600 uppercase tracking-widest mb-6 font-medium">Live Preview</p>
         <div
           className="w-[390px] min-h-[844px] rounded-[40px] border border-zinc-700 overflow-hidden shadow-2xl flex flex-col items-center pt-16 pb-8 px-6 text-white"

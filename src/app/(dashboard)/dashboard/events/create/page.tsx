@@ -83,7 +83,7 @@ export default function CreateEventPage() {
           <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-600" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">Venue</label>
             <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="The Fillmore"
