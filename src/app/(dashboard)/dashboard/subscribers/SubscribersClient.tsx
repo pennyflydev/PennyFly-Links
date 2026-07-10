@@ -106,7 +106,7 @@ export default function SubscribersClient({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {stats.map(({ label, value }) => (
           <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <p className="text-3xl font-bold text-white">{value}</p>

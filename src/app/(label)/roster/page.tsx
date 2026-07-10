@@ -129,7 +129,7 @@ export default async function RosterPage() {
         />
       )}
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {stats.map(({ label: l, value, icon: Icon }) => (
           <div key={l} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">

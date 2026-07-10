@@ -98,7 +98,7 @@ export default function TicketsManageClient({
       </div>
 
       {/* Reporting */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {stats.map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <div className="flex items-center gap-2 text-zinc-500 text-xs mb-1">

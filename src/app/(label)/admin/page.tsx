@@ -86,7 +86,7 @@ export default async function AdminOverview() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {kpis.map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">

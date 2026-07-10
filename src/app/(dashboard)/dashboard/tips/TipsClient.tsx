@@ -73,7 +73,7 @@ export default function TipsClient({
       )}
 
       {/* Enable + total */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex items-center justify-between">
           <div>
             <p className="font-medium text-white">Show the tip jar on my page</p>

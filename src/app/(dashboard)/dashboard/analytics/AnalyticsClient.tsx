@@ -179,7 +179,7 @@ export default function AnalyticsClient({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {kpis.map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
@@ -306,7 +306,7 @@ export default function AnalyticsClient({
       {deviceTotal > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
           <h2 className="text-sm font-semibold text-white mb-4">Devices</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {([
               ['Mobile', devices.mobile],
               ['Desktop', devices.desktop],

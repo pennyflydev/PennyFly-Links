@@ -125,7 +125,7 @@ export default function OverviewClient({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {stats.map(({ label, value, icon: Icon }) => (
           <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
@@ -137,9 +137,9 @@ export default function OverviewClient({
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Chart */}
-        <div className="col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-zinc-400">Views &amp; Clicks</h2>
             <div className="flex items-center gap-4 text-xs">

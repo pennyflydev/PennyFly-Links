@@ -5,7 +5,14 @@ re-touched. Newest first. Each entry: what changed, files, commit.
 
 ## UI
 
-- **Mobile responsiveness: data tables + settings tabs** — _(this commit)_
+- **Overview nav active-state fix + responsive stat grids** — _(this commit)_
+  Sidebar "Overview" pointed at `/dashboard` (which redirects to
+  `/dashboard/overview`), so it never highlighted as active — repointed to
+  `/dashboard/overview`. Made fixed `grid-cols-3/4` stat rows responsive
+  (`grid-cols-2 md:grid-cols-4`, `grid-cols-1 sm:grid-cols-3`) across overview,
+  analytics, subscribers, admin, roster, roster/[artistId], tickets, sms, tips.
+
+- **Mobile responsiveness: data tables + settings tabs** — `7442e7a`
   Wrapped the roster, Label HQ, and subscribers tables in `overflow-x-auto` +
   `min-w-[640px]` (they were raw tables inside `overflow-hidden` cards → clipped
   on mobile). Analytics already had this. Settings page inner layout now stacks

@@ -36,7 +36,7 @@ type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean 
 const navGroups: { title?: string; items: NavItem[] }[] = [
   {
     items: [
-      { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
+      { href: '/dashboard/overview', label: 'Overview', icon: LayoutDashboard, exact: true },
       { href: '/dashboard/artist-page', label: 'Artist Page', icon: User },
       { href: '/dashboard/links', label: 'My FlyLinks', icon: Link2 },
       { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
